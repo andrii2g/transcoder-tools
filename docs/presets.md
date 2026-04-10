@@ -54,6 +54,44 @@ output=./out/source-social-square.mp4
 
 The profile can stay small because the preset provides the dimensions, codecs, bitrates, sample rate, and quality.
 
+## Advanced preset-only ffmpeg options
+
+Basic users should continue using width, height, codec, bitrate, and quality fields. Advanced users can place selected raw ffmpeg behavior in a custom preset file so output profiles stay simple.
+
+Supported advanced preset-only fields:
+
+- `video_filter`: replaces the generated `scale=WIDTH:HEIGHT` filter
+- `extra_output_args`: appends simple whitespace-separated ffmpeg output arguments before the output file
+
+These fields are intentionally only allowed in preset files, not profile files.
+
+Example preset with aspect-ratio preserving scale and centered padding:
+
+```config
+name=480p-contain
+width=854
+height=480
+video_codec=h264
+audio_codec=aac
+video_bitrate=900k
+audio_bitrate=128k
+audio_sample_rate=48000
+quality=standard
+video_filter=scale=854:480:force_original_aspect_ratio=decrease,pad=854:480:(ow-iw)/2:(oh-ih)/2
+extra_output_args=-pix_fmt yuv420p
+description=480p preset preserving aspect ratio with centered padding
+```
+
+Profile using that preset:
+
+```config
+name=480p-contained-output
+preset=480p-contain
+output=./out/source-480p-contained.mp4
+```
+
+`extra_output_args` is parsed as simple whitespace-separated arguments. Keep complex shell quoting out of config files in v1.
+
 ## Preset lookup
 
 `preset=<name>` loads `./presets/<name>.conf` from the repository root.

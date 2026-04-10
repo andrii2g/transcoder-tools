@@ -45,7 +45,7 @@ apply_profile_preset_defaults() {
   load_preset_config "$preset_name" preset_cfg || die "Unsupported preset or preset file not found: $preset_name"
   profile_ref[preset]="$(normalize_preset_name "$preset_name")"
 
-  for key in width height video_bitrate audio_bitrate video_codec audio_codec audio_sample_rate quality crf; do
+  for key in width height video_bitrate audio_bitrate video_codec audio_codec audio_sample_rate quality crf video_filter extra_output_args; do
     if [[ -z "$(config_get "$profile_name" "$key")" && -n "$(config_get preset_cfg "$key")" ]]; then
       profile_ref["$key"]="$(config_get preset_cfg "$key")"
     fi

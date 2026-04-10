@@ -4,7 +4,7 @@ All notable changes to `transcoder-tools` are documented here.
 
 ## 0.2.0
 
-Added logging support for deeper run analysis.
+Added transcode logging and advanced preset-only ffmpeg escape hatches.
 
 Version `0.2.0` adds:
 
@@ -13,6 +13,11 @@ Version `0.2.0` adds:
 - generated command logging in normal and dry-run modes
 - verbose resolution details in log files when `--verbose` is enabled
 - `ffmpeg` output capture into the same log file during real transcodes
+- preset-only `video_filter` support for replacing the generated `scale=WIDTH:HEIGHT` filter
+- preset-only `extra_output_args` support for appending simple ffmpeg output arguments
+- validation that rejects `video_filter` and `extra_output_args` in profile files
+- example `480p-contain` preset using aspect-ratio preserving scale and centered padding
+- example advanced-filter job and profile files
 
 ## 0.1.0
 

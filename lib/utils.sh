@@ -99,7 +99,17 @@ ensure_parent_dir() {
   mkdir -p "$parent"
 }
 
+
+split_words() {
+  local input="$1"
+  local out_name="$2"
+  local -n out_ref="$out_name"
+  out_ref=()
+  [[ -n "$input" ]] || return 0
+  read -r -a out_ref <<< "$input"
+}
 join_command_for_display() {
+
   local result=""
   local part
   for part in "$@"; do

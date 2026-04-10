@@ -45,6 +45,9 @@ validate_profile_config() {
   [[ -n "$profile_display_name" ]] || die "Profile field name is required: $profile_path"
   [[ -n "$(config_get "$profile_name" output)" ]] || die "Profile field output is required: $profile_path"
 
+  [[ -z "$(config_get "$profile_name" video_filter)" ]] || die "video_filter is only supported in preset files: $profile_path"
+  [[ -z "$(config_get "$profile_name" extra_output_args)" ]] || die "extra_output_args is only supported in preset files: $profile_path"
+
   preset_input="$(config_get "$profile_name" preset)"
   if [[ -z "$preset_input" ]]; then
     if preset_file_for "$profile_display_name" >/dev/null 2>&1; then

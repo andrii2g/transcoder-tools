@@ -107,6 +107,8 @@ These values can come from the preset file, the profile file, or both.
 - `crf`
   - required only when `quality=custom`
 
+Advanced ffmpeg fields such as `video_filter` and `extra_output_args` are not allowed in profile files. Put them in custom preset files instead.
+
 ## Preset files
 
 Preset files define reusable transcoding defaults.
@@ -139,6 +141,23 @@ name=social-square-output
 preset=social-square
 output=./out/source-social-square.mp4
 ```
+
+## Advanced preset fields
+
+Advanced users can add selected raw ffmpeg behavior to custom preset files.
+
+Supported fields:
+
+- `video_filter`
+  - optional
+  - replaces the generated `scale=WIDTH:HEIGHT` filter
+  - useful for filters such as `scale=854:480:force_original_aspect_ratio=decrease,pad=854:480:(ow-iw)/2:(oh-ih)/2`
+- `extra_output_args`
+  - optional
+  - appends simple whitespace-separated ffmpeg output arguments before the output file
+  - example: `extra_output_args=-pix_fmt yuv420p`
+
+Do not put these fields in profile files. `vtx` rejects them there so advanced ffmpeg details stay reusable and centralized in presets.
 
 ## Override rules
 

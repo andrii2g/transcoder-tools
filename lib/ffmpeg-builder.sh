@@ -12,6 +12,7 @@ resolve_profile_runtime() {
   local audio_codec
   local quality
   local crf_value
+  local video_filter
 
   preset="$(config_get "$profile_name" preset)"
   resolve_dimensions \
@@ -39,10 +40,17 @@ resolve_profile_runtime() {
   profile_ref[resolved_audio_bitrate]="$audio_bitrate"
   profile_ref[resolved_video_codec]="$video_codec"
   profile_ref[resolved_audio_codec]="$audio_codec"
+  video_filter="$(config_get "$profile_name" video_filter)"
+  if [[ -z "$video_filter" ]]; then
+    video_filter="scale=${width}:${height}"
+  fi
+
   profile_ref[resolved_crf]="$crf_value"
+  profile_ref[resolved_video_filter]="$video_filter"
 
   log_verbose "Profile $(config_get "$profile_name" name) resolved preset=${preset} width=${width} height=${height}"
   log_verbose "Profile $(config_get "$profile_name" name) bitrate map video=${video_bitrate} audio=${audio_bitrate}"
+  log_verbose "Profile $(config_get "$profile_name" name) filter=${video_filter}"
   log_verbose "Profile $(config_get "$profile_name" name) codec map video=${video_codec} audio=${audio_codec} crf=${crf_value}"
 }
 
@@ -57,6 +65,8 @@ build_ffmpeg_command() {
   local ffmpeg_bin
   local input_path
   local output_path
+  local extra_output_args
+  local -a extra_args=()
 
   ffmpeg_bin="$(config_get "$job_name" ffmpeg ffmpeg)"
   input_path="$(config_get "$job_name" input)"
@@ -72,7 +82,7 @@ build_ffmpeg_command() {
 
   cmd_ref+=(
     "-i" "$input_path"
-    "-vf" "scale=${profile_ref[resolved_width]}:${profile_ref[resolved_height]}"
+    "-vf" "${profile_ref[resolved_video_filter]}"
     "-c:v" "${profile_ref[resolved_video_codec]}"
     "-b:v" "${profile_ref[resolved_video_bitrate]}"
     "-c:a" "${profile_ref[resolved_audio_codec]}"
@@ -88,6 +98,12 @@ build_ffmpeg_command() {
       cmd_ref+=("-crf" "${profile_ref[resolved_crf]}")
       ;;
   esac
+
+  extra_output_args="$(config_get "$profile_name" extra_output_args)"
+  if [[ -n "$extra_output_args" ]]; then
+    split_words "$extra_output_args" extra_args
+    cmd_ref+=("${extra_args[@]}")
+  fi
 
   cmd_ref+=(
     "-movflags" "+faststart"

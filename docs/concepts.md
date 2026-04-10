@@ -69,7 +69,7 @@ Resolved mappings in v1:
 
 You can copy any preset file or create a new one under `presets/`, then reference it from a profile with `preset=<name>`.
 
-Profile values override preset values where applicable.
+Profile values override preset values where applicable. Advanced ffmpeg details such as custom video filters can live in preset files so profiles remain output-focused.
 
 ## Quality model
 
