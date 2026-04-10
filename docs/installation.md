@@ -116,7 +116,7 @@ The sample jobs reference `./input/source.mp4`. Replace that placeholder with a 
 
 ```bash
 ./bin/vtx.sh validate --job ./jobs/example-multi-output.conf
-./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --dry-run --verbose
+./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --dry-run --verbose --log ./logs/dry-run.log
 ```
 
 Dry-run mode prints generated `ffmpeg` commands without creating outputs.

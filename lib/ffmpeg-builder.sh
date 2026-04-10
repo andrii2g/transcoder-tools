@@ -98,8 +98,19 @@ build_ffmpeg_command() {
 run_ffmpeg_command() {
   local cmd_name="$1"
   local -n cmd_ref="$cmd_name"
+  local status
+
   if [[ "${VTX_VERBOSE}" == "1" ]]; then
     log_info "Executing: $(join_command_for_display "${cmd_ref[@]}")"
   fi
+
+  if [[ -n "${VTX_LOG_FILE:-}" ]]; then
+    set +e
+    "${cmd_ref[@]}" 2>&1 | tee -a "$VTX_LOG_FILE"
+    status=${PIPESTATUS[0]}
+    set -e
+    return "$status"
+  fi
+
   "${cmd_ref[@]}"
 }

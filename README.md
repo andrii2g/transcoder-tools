@@ -25,7 +25,7 @@ Basic usage:
 ./bin/vtx.sh list-presets
 ./bin/vtx.sh validate --job ./jobs/example-multi-output.conf
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --dry-run
-./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose
+./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose --log ./logs/transcode.log
 ```
 
 Make the script executable on Linux if needed:
@@ -46,6 +46,12 @@ Dry-run mode fully resolves and validates the configs, then prints the generated
 
 ```bash
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --dry-run
+```
+
+Use `--log <path>` with `transcode` when you want to save generated commands, verbose resolution details, and `ffmpeg` output for later analysis:
+
+```bash
+./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose --log ./logs/transcode.log
 ```
 
 ## Directory overview

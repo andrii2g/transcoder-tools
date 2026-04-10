@@ -5,7 +5,7 @@ print_usage() {
 Usage:
   ./bin/vtx.sh list-presets
   ./bin/vtx.sh validate --job <job.conf> [--verbose]
-  ./bin/vtx.sh transcode --job <job.conf> [--dry-run] [--verbose]
+  ./bin/vtx.sh transcode --job <job.conf> [--dry-run] [--verbose] [--log <path>]
   ./bin/vtx.sh --version
 
 Commands:
@@ -17,6 +17,7 @@ Flags:
   --job <path>   Job config path
   --dry-run      Print ffmpeg commands without executing them
   --verbose      Print resolved config and command details
+  --log <path>   Write transcode output and ffmpeg output to a log file
   --version      Print vtx version
   -h, --help     Show help
 EOF
@@ -50,7 +51,7 @@ run_validate() {
     resolve_profile_runtime profile_cfg
   done
 
-  printf 'Validation successful for %s\n' "$job_path"
+  emit_line "Validation successful for $job_path"
 }
 
 run_transcode() {
@@ -76,7 +77,7 @@ run_transcode() {
     build_ffmpeg_command job_cfg profile_cfg ffmpeg_cmd
     output_path="$(config_get profile_cfg output)"
 
-    printf '%s\n' "$(join_command_for_display "${ffmpeg_cmd[@]}")"
+    emit_line "$(join_command_for_display "${ffmpeg_cmd[@]}")"
 
     if [[ "$dry_run" == "1" ]]; then
       continue
@@ -90,6 +91,7 @@ run_transcode() {
 vtx_main() {
   local command=""
   local job_path=""
+  local log_path=""
   local dry_run=0
 
   if [[ $# -eq 0 ]]; then
@@ -119,6 +121,11 @@ vtx_main() {
         VTX_VERBOSE=1
         shift
         ;;
+      --log)
+        [[ $# -ge 2 ]] || die "--log requires a value"
+        log_path="$2"
+        shift 2
+        ;;
       --version)
         printf 'vtx %s\n' "$VTX_VERSION"
         exit 0
@@ -132,6 +139,14 @@ vtx_main() {
         ;;
     esac
   done
+
+  if [[ -n "$log_path" && "$command" != "transcode" ]]; then
+    die "--log is only supported for transcode"
+  fi
+
+  if [[ -n "$log_path" ]]; then
+    log_init "$log_path"
+  fi
 
   case "$command" in
     list-presets)

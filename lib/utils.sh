@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-VTX_VERSION="0.1.0"
+VTX_VERSION="0.2.0"
 VTX_VERBOSE=0
+VTX_LOG_FILE=""
 
 trim() {
   local value="$1"
@@ -22,18 +23,44 @@ normalize_bool() {
   esac
 }
 
+log_init() {
+  local log_path="$1"
+  [[ -n "$log_path" ]] || die "--log requires a non-empty path"
+  ensure_parent_dir "$log_path"
+  : > "$log_path" || die "Cannot write log file: $log_path"
+  VTX_LOG_FILE="$log_path"
+  log_info "Writing log to $log_path"
+}
+
+write_log_line() {
+  if [[ -n "${VTX_LOG_FILE:-}" ]]; then
+    printf '%s\n' "$*" >> "$VTX_LOG_FILE"
+  fi
+}
+
+emit_line() {
+  printf '%s\n' "$*"
+  write_log_line "$*"
+}
+
 log_info() {
-  printf '[INFO] %s\n' "$*" >&2
+  local message="[INFO] $*"
+  printf '%s\n' "$message" >&2
+  write_log_line "$message"
 }
 
 log_verbose() {
   if [[ "${VTX_VERBOSE}" == "1" ]]; then
-    printf '[VERBOSE] %s\n' "$*" >&2
+    local message="[VERBOSE] $*"
+    printf '%s\n' "$message" >&2
+    write_log_line "$message"
   fi
 }
 
 log_error() {
-  printf '[ERROR] %s\n' "$*" >&2
+  local message="[ERROR] $*"
+  printf '%s\n' "$message" >&2
+  write_log_line "$message"
 }
 
 die() {

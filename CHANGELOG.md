@@ -2,6 +2,18 @@
 
 All notable changes to `transcoder-tools` are documented here.
 
+## 0.2.0
+
+Added logging support for deeper run analysis.
+
+Version `0.2.0` adds:
+
+- `--log <path>` for `transcode`
+- automatic log directory creation
+- generated command logging in normal and dry-run modes
+- verbose resolution details in log files when `--verbose` is enabled
+- `ffmpeg` output capture into the same log file during real transcodes
+
 ## 0.1.0
 
 Initial Bash MVP for the `vtx` CLI.
