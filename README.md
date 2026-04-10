@@ -12,12 +12,6 @@ The main CLI is `vtx`, a config-driven video transcoder that turns one input vid
 - config-driven jobs that are easy to save and rerun
 - simple first version that stays extensible for HLS, live, and OBS workflows (planned)
 
-## Current scope
-
-`vtx` currently focuses on simple file-to-file MP4 transcoding from one input video into one or more output profiles.
-
-See [CHANGELOG.md](CHANGELOG.md) for version-specific release notes.
-
 ## Quick start
 
 Requirements:
@@ -41,70 +35,11 @@ Make the script executable on Linux if needed:
 chmod +x ./bin/vtx.sh
 ```
 
-## How it works
+## Core concepts
 
-`vtx` uses two config types:
+`vtx` uses job files, profile files, friendly preset names, and a small quality model to hide most raw `ffmpeg` flags from end users.
 
-- job files
-- profile files
-
-One job can reference multiple profile files:
-
-```config
-input=./input/source.mp4
-ffmpeg=ffmpeg
-overwrite=true
-outputs=./profiles/example-1080p.conf,./profiles/example-custom.conf
-```
-
-Each profile is self-contained and includes its own `output=` field:
-
-```config
-name=1080p-h264-aac
-preset=1080p
-video_codec=h264
-audio_codec=aac
-video_bitrate=5000k
-audio_bitrate=192k
-audio_sample_rate=48000
-quality=standard
-output=./out/source-1080p.mp4
-```
-
-## Presets
-
-Supported preset names:
-
-- `360p`
-- `480p`
-- `720p`
-- `1080p`
-- `2K`
-- `4K`
-- `8K`
-- `custom`
-
-Resolved mappings in v1:
-
-- `360p` -> `640x360`
-- `480p` -> `854x480`
-- `720p` -> `1280x720`
-- `1080p` -> `1920x1080`
-- `2K` -> `2560x1440`
-- `4K` -> `3840x2160`
-- `8K` -> `7680x4320`
-- `custom` -> requires `width` and `height`
-
-If `width` and `height` are explicitly set in a profile, they override the preset defaults.
-
-## Quality model
-
-The user-facing `quality` setting maps to CRF values:
-
-- `standard` -> `22`
-- `high` -> `18`
-- `small` -> `25`
-- `custom` -> requires explicit `crf`
+See [Core concepts](docs/concepts.md) for how jobs, profiles, presets, and quality values work.
 
 ## Dry-run mode
 
@@ -142,21 +77,15 @@ transcoder-tools/
 ./bin/vtx.sh transcode --job ./jobs/example-custom.conf --dry-run --verbose
 ```
 
-## Notes
-
-- Sample jobs point at `./input/source.mp4`. Replace that file with a real input video before running real transcodes.
-- Output directories are created automatically before execution.
-- The v1 implementation intentionally hides most raw `ffmpeg` flags.
-
 ## Documentation
 
-- [CLI reference](transcoder-tools/docs/cli.md)
-- [Config format](transcoder-tools/docs/config-format.md)
-- [Preset details](transcoder-tools/docs/presets.md)
-- [Roadmap](transcoder-tools/docs/roadmap.md)
-- [Changelog](CHANGELOG.md)
+- [CLI reference](docs/cli.md): commands, flags, and examples
+- [Core concepts](docs/concepts.md): how jobs, profiles, presets, and quality values work
+- [Config format](docs/config-format.md): required fields, optional fields, and override rules
+- [Preset details](docs/presets.md): preset dimensions, width/height overrides, and codec mappings
+- [Roadmap](docs/roadmap.md): planned HLS, live OBS, and adaptive streaming work
+- [Changelog](CHANGELOG.md): version-specific release notes
 
-## Future direction
 
-This repository is intentionally structured so `vtx` can grow into HLS packaging workflows, live transcoding modes for OBS-driven inputs, adaptive bitrate output sets, and generated HLS master playlists.
+
 
