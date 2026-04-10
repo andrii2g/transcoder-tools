@@ -58,7 +58,7 @@ Required profile fields:
 - `name`
 - `output`
 
-Use `preset=<name>` to load `./presets/<name>.conf`. You can also use a direct path such as `preset=./presets/social-square.conf`.
+Use `preset=<name>` to load `./presets/<name>.conf`. You can also use a direct path such as `preset=./presets/examples/social-square.conf`.
 
 If `preset=` is omitted, `vtx` tries to use the profile `name` as the preset name. Explicit `preset=` is recommended for readability.
 
@@ -111,7 +111,7 @@ quality=high
 description=Square social media export
 ```
 
-Save it as `presets/social-square.conf`, then use it from a profile:
+Save it as `presets/examples/social-square.conf`, then use it from a profile:
 
 ```config
 name=social-square-output

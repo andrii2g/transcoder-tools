@@ -2,7 +2,7 @@
 
 `vtx` provides a small set of normalized output presets so users can think in common delivery sizes and bandwidth targets instead of raw scale and bitrate flags.
 
-Preset files live in `presets/` and use the same simple `key=value` format as jobs and profiles.
+Bundled preset files live directly in `presets/`. Example presets live in `presets/examples/` so they do not mix with the default preset set.
 
 ## Supported bundled presets
 
@@ -21,12 +21,12 @@ The bitrate defaults are practical starting points, not strict delivery recommen
 
 ## Custom preset files
 
-You can create your own reusable presets by copying a bundled preset file or creating a new file under `presets/`.
+You can create your own reusable presets by copying a bundled preset file or creating a new file under `presets/` or a project-specific subfolder such as `presets/examples/`.
 
 Example:
 
 ```bash
-cp ./presets/720p.conf ./presets/social-square.conf
+cp ./presets/720p.conf ./presets/examples/social-square.conf
 ```
 
 Then edit the new preset:
@@ -48,7 +48,7 @@ Reference it from a profile:
 
 ```config
 name=social-square-output
-preset=social-square
+preset=./presets/examples/social-square.conf
 output=./out/source-social-square.mp4
 ```
 
@@ -86,7 +86,7 @@ Profile using that preset:
 
 ```config
 name=480p-contained-output
-preset=480p-contain
+preset=./presets/examples/480p-contain.conf
 output=./out/source-480p-contained.mp4
 ```
 
@@ -116,14 +116,14 @@ Examples:
 
 ```config
 preset=720p
-preset=social-square
-preset=square-h264-aac
+preset=./presets/examples/social-square.conf
+preset=./presets/examples/square-h264-aac.conf
 ```
 
 You can also point directly to a preset file path:
 
 ```config
-preset=./presets/social-square.conf
+preset=./presets/examples/social-square.conf
 ```
 
 If a profile omits `preset=`, `vtx` will try to use the profile `name` as a preset name. This is convenient for very small output profiles, but explicit `preset=` is clearer and recommended.
