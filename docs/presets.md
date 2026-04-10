@@ -52,7 +52,7 @@ preset=social-square
 output=./out/source-social-square.mp4
 ```
 
-The profile can stay small because the preset provides the dimensions, codecs, bitrates, sample rate, and quality.
+The profile can stay small because the preset provides the dimensions, codecs, bitrates, sample rate, and quality. Bundled presets use `audio_sample_rate=48000` by default.
 
 ## Advanced preset-only ffmpeg options
 
@@ -91,6 +91,22 @@ output=./out/source-480p-contained.mp4
 ```
 
 `extra_output_args` is parsed as simple whitespace-separated arguments. Keep complex shell quoting out of config files in v1.
+
+## Audio sample rate
+
+Preset files can define `audio_sample_rate=48000`, which is the default used by bundled presets.
+
+Profiles can override that value:
+
+```config
+audio_sample_rate=44100
+```
+
+Profiles or presets can also use `source` to preserve the source sample rate by omitting `-ar`:
+
+```config
+audio_sample_rate=source
+```
 
 ## Preset lookup
 

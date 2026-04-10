@@ -18,6 +18,7 @@ Version `0.2.0` adds:
 - validation that rejects `video_filter` and `extra_output_args` in profile files
 - example `480p-contain` preset using aspect-ratio preserving scale and centered padding
 - example advanced-filter job and profile files
+- `audio_sample_rate=source` to preserve source audio sample rate by omitting `-ar`
 
 ## 0.1.0
 

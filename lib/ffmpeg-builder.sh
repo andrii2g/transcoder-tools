@@ -65,6 +65,7 @@ build_ffmpeg_command() {
   local ffmpeg_bin
   local input_path
   local output_path
+  local audio_sample_rate
   local extra_output_args
   local -a extra_args=()
 
@@ -89,8 +90,9 @@ build_ffmpeg_command() {
     "-b:a" "${profile_ref[resolved_audio_bitrate]}"
   )
 
-  if [[ -n "$(config_get "$profile_name" audio_sample_rate)" ]]; then
-    cmd_ref+=("-ar" "$(config_get "$profile_name" audio_sample_rate)")
+  audio_sample_rate="$(config_get "$profile_name" audio_sample_rate)"
+  if [[ -n "$audio_sample_rate" && "$audio_sample_rate" != "source" ]]; then
+    cmd_ref+=("-ar" "$audio_sample_rate")
   fi
 
   case "${profile_ref[resolved_video_codec]}" in

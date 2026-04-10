@@ -37,6 +37,7 @@ validate_profile_config() {
   local normalized_quality
   local width
   local height
+  local audio_sample_rate
 
   read_config_file "$profile_path" "$profile_name"
   print_config_map "Resolved profile config from $profile_path" "$profile_name"
@@ -76,6 +77,11 @@ validate_profile_config() {
   [[ -n "$width" && -n "$height" ]] || die "Profile or preset fields width and height are required: $profile_path"
   [[ "$width" =~ ^[0-9]+$ ]] || die "width must be numeric in $profile_path"
   [[ "$height" =~ ^[0-9]+$ ]] || die "height must be numeric in $profile_path"
+
+  audio_sample_rate="$(config_get "$profile_name" audio_sample_rate)"
+  if [[ -n "$audio_sample_rate" && "$audio_sample_rate" != "source" ]]; then
+    [[ "$audio_sample_rate" =~ ^[0-9]+$ ]] || die "audio_sample_rate must be numeric or source in $profile_path"
+  fi
 
   if [[ "$normalized_quality" == "custom" ]]; then
     [[ -n "$(config_get "$profile_name" crf)" ]] || die "quality=custom requires crf in $profile_path"
