@@ -43,10 +43,22 @@ outputs=./profiles/example-1080p.conf,./profiles/example-custom.conf
 
 Profile files define one output video.
 
-Example:
+Example using preset bitrate defaults:
 
 ```config
 name=720p-h264-aac
+preset=720p
+video_codec=h264
+audio_codec=aac
+audio_sample_rate=48000
+quality=standard
+output=./out/source-720p.mp4
+```
+
+Example overriding preset bitrate defaults:
+
+```config
+name=720p-h264-aac-custom-bitrate
 preset=720p
 video_codec=h264
 audio_codec=aac
@@ -63,12 +75,21 @@ output=./out/source-720p.mp4
 - `preset`
 - `video_codec`
 - `audio_codec`
+- `output`
+
+### Required only for `preset=custom`
+
+- `width`
+- `height`
 - `video_bitrate`
 - `audio_bitrate`
-- `output`
 
 ### Optional profile fields
 
+- `video_bitrate`
+  - overrides preset default for known presets
+- `audio_bitrate`
+  - overrides preset default for known presets
 - `audio_sample_rate`
 - `quality`
   - defaults to `standard`
@@ -79,13 +100,14 @@ output=./out/source-720p.mp4
 
 ## Override rules
 
-Preset dimensions are the default source of `width` and `height`.
+Preset dimensions and bitrates are the default source of `width`, `height`, `video_bitrate`, and `audio_bitrate`.
 
 Rules in v1:
 
-- `preset=custom` requires both `width` and `height`
+- `preset=custom` requires `width`, `height`, `video_bitrate`, and `audio_bitrate`
 - if either `width` or `height` is set, both must be set
-- explicit `width` and `height` override preset defaults
+- explicit `width` and `height` override preset dimensions
+- explicit `video_bitrate` and `audio_bitrate` override preset bitrates independently
 
 ## Codec mapping
 

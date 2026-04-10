@@ -5,6 +5,8 @@ resolve_profile_runtime() {
   local -n profile_ref="$profile_name"
   local width
   local height
+  local video_bitrate
+  local audio_bitrate
   local preset
   local video_codec
   local audio_codec
@@ -19,6 +21,13 @@ resolve_profile_runtime() {
     width \
     height
 
+  resolve_bitrates \
+    "$preset" \
+    "$(config_get "$profile_name" video_bitrate)" \
+    "$(config_get "$profile_name" audio_bitrate)" \
+    video_bitrate \
+    audio_bitrate
+
   video_codec="$(map_video_codec "$(config_get "$profile_name" video_codec)")"
   audio_codec="$(map_audio_codec "$(config_get "$profile_name" audio_codec)")"
   quality="$(config_get "$profile_name" quality standard)"
@@ -26,11 +35,14 @@ resolve_profile_runtime() {
 
   profile_ref[resolved_width]="$width"
   profile_ref[resolved_height]="$height"
+  profile_ref[resolved_video_bitrate]="$video_bitrate"
+  profile_ref[resolved_audio_bitrate]="$audio_bitrate"
   profile_ref[resolved_video_codec]="$video_codec"
   profile_ref[resolved_audio_codec]="$audio_codec"
   profile_ref[resolved_crf]="$crf_value"
 
   log_verbose "Profile $(config_get "$profile_name" name) resolved preset=${preset} width=${width} height=${height}"
+  log_verbose "Profile $(config_get "$profile_name" name) bitrate map video=${video_bitrate} audio=${audio_bitrate}"
   log_verbose "Profile $(config_get "$profile_name" name) codec map video=${video_codec} audio=${audio_codec} crf=${crf_value}"
 }
 
@@ -62,9 +74,9 @@ build_ffmpeg_command() {
     "-i" "$input_path"
     "-vf" "scale=${profile_ref[resolved_width]}:${profile_ref[resolved_height]}"
     "-c:v" "${profile_ref[resolved_video_codec]}"
-    "-b:v" "$(config_get "$profile_name" video_bitrate)"
+    "-b:v" "${profile_ref[resolved_video_bitrate]}"
     "-c:a" "${profile_ref[resolved_audio_codec]}"
-    "-b:a" "$(config_get "$profile_name" audio_bitrate)"
+    "-b:a" "${profile_ref[resolved_audio_bitrate]}"
   )
 
   if [[ -n "$(config_get "$profile_name" audio_sample_rate)" ]]; then

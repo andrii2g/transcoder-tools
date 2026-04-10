@@ -20,6 +20,26 @@ declare -Ar VTX_PRESET_HEIGHTS=(
   [8k]=4320
 )
 
+declare -Ar VTX_PRESET_VIDEO_BITRATES=(
+  [360p]=600k
+  [480p]=900k
+  [720p]=1200k
+  [1080p]=4500k
+  [2k]=8000k
+  [4k]=16000k
+  [8k]=40000k
+)
+
+declare -Ar VTX_PRESET_AUDIO_BITRATES=(
+  [360p]=64k
+  [480p]=128k
+  [720p]=128k
+  [1080p]=192k
+  [2k]=192k
+  [4k]=320k
+  [8k]=320k
+)
+
 declare -Ar VTX_PRESET_DESCRIPTIONS=(
   [360p]="Low resolution web/mobile profile"
   [480p]="Standard definition profile"
@@ -28,7 +48,7 @@ declare -Ar VTX_PRESET_DESCRIPTIONS=(
   [2k]="Practical 2560x1440 profile for this tool"
   [4k]="Ultra HD 3840x2160 profile"
   [8k]="Ultra high resolution 7680x4320 profile"
-  [custom]="User-defined dimensions"
+  [custom]="User-defined dimensions and bitrates"
 )
 
 normalize_preset_name() {
@@ -110,15 +130,40 @@ resolve_dimensions() {
   out_height_ref="${VTX_PRESET_HEIGHTS[$preset]}"
 }
 
+resolve_bitrates() {
+  local preset="$1"
+  local explicit_video_bitrate="${2-}"
+  local explicit_audio_bitrate="${3-}"
+  local -n out_video_bitrate_ref="$4"
+  local -n out_audio_bitrate_ref="$5"
+
+  if [[ "$preset" == "custom" ]]; then
+    [[ -n "$explicit_video_bitrate" ]] || die "preset=custom requires video_bitrate"
+    [[ -n "$explicit_audio_bitrate" ]] || die "preset=custom requires audio_bitrate"
+  fi
+
+  if [[ -n "$explicit_video_bitrate" ]]; then
+    out_video_bitrate_ref="$explicit_video_bitrate"
+  else
+    out_video_bitrate_ref="${VTX_PRESET_VIDEO_BITRATES[$preset]}"
+  fi
+
+  if [[ -n "$explicit_audio_bitrate" ]]; then
+    out_audio_bitrate_ref="$explicit_audio_bitrate"
+  else
+    out_audio_bitrate_ref="${VTX_PRESET_AUDIO_BITRATES[$preset]}"
+  fi
+}
+
 list_presets_table() {
-  printf '%-10s %-14s %s\n' "Preset" "Dimensions" "Typical use"
-  printf '%-10s %-14s %s\n' "------" "----------" "-----------"
-  printf '%-10s %-14s %s\n' "360p" "640x360" "${VTX_PRESET_DESCRIPTIONS[360p]}"
-  printf '%-10s %-14s %s\n' "480p" "854x480" "${VTX_PRESET_DESCRIPTIONS[480p]}"
-  printf '%-10s %-14s %s\n' "720p" "1280x720" "${VTX_PRESET_DESCRIPTIONS[720p]}"
-  printf '%-10s %-14s %s\n' "1080p" "1920x1080" "${VTX_PRESET_DESCRIPTIONS[1080p]}"
-  printf '%-10s %-14s %s\n' "2K" "2560x1440" "${VTX_PRESET_DESCRIPTIONS[2k]}"
-  printf '%-10s %-14s %s\n' "4K" "3840x2160" "${VTX_PRESET_DESCRIPTIONS[4k]}"
-  printf '%-10s %-14s %s\n' "8K" "7680x4320" "${VTX_PRESET_DESCRIPTIONS[8k]}"
-  printf '%-10s %-14s %s\n' "custom" "user-defined" "${VTX_PRESET_DESCRIPTIONS[custom]}"
+  printf '%-10s %-14s %-14s %-14s %s\n' "Preset" "Dimensions" "Video bitrate" "Audio bitrate" "Typical use"
+  printf '%-10s %-14s %-14s %-14s %s\n' "------" "----------" "-------------" "-------------" "-----------"
+  printf '%-10s %-14s %-14s %-14s %s\n' "360p" "640x360" "${VTX_PRESET_VIDEO_BITRATES[360p]}" "${VTX_PRESET_AUDIO_BITRATES[360p]}" "${VTX_PRESET_DESCRIPTIONS[360p]}"
+  printf '%-10s %-14s %-14s %-14s %s\n' "480p" "854x480" "${VTX_PRESET_VIDEO_BITRATES[480p]}" "${VTX_PRESET_AUDIO_BITRATES[480p]}" "${VTX_PRESET_DESCRIPTIONS[480p]}"
+  printf '%-10s %-14s %-14s %-14s %s\n' "720p" "1280x720" "${VTX_PRESET_VIDEO_BITRATES[720p]}" "${VTX_PRESET_AUDIO_BITRATES[720p]}" "${VTX_PRESET_DESCRIPTIONS[720p]}"
+  printf '%-10s %-14s %-14s %-14s %s\n' "1080p" "1920x1080" "${VTX_PRESET_VIDEO_BITRATES[1080p]}" "${VTX_PRESET_AUDIO_BITRATES[1080p]}" "${VTX_PRESET_DESCRIPTIONS[1080p]}"
+  printf '%-10s %-14s %-14s %-14s %s\n' "2K" "2560x1440" "${VTX_PRESET_VIDEO_BITRATES[2k]}" "${VTX_PRESET_AUDIO_BITRATES[2k]}" "${VTX_PRESET_DESCRIPTIONS[2k]}"
+  printf '%-10s %-14s %-14s %-14s %s\n' "4K" "3840x2160" "${VTX_PRESET_VIDEO_BITRATES[4k]}" "${VTX_PRESET_AUDIO_BITRATES[4k]}" "${VTX_PRESET_DESCRIPTIONS[4k]}"
+  printf '%-10s %-14s %-14s %-14s %s\n' "8K" "7680x4320" "${VTX_PRESET_VIDEO_BITRATES[8k]}" "${VTX_PRESET_AUDIO_BITRATES[8k]}" "${VTX_PRESET_DESCRIPTIONS[8k]}"
+  printf '%-10s %-14s %-14s %-14s %s\n' "custom" "user-defined" "required" "required" "${VTX_PRESET_DESCRIPTIONS[custom]}"
 }

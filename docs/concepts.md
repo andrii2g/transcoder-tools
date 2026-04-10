@@ -25,8 +25,6 @@ name=1080p-h264-aac
 preset=1080p
 video_codec=h264
 audio_codec=aac
-video_bitrate=5000k
-audio_bitrate=192k
 audio_sample_rate=48000
 quality=standard
 output=./out/source-1080p.mp4
@@ -49,16 +47,16 @@ Supported preset names:
 
 Resolved mappings in v1:
 
-- `360p` -> `640x360`
-- `480p` -> `854x480`
-- `720p` -> `1280x720`
-- `1080p` -> `1920x1080`
-- `2K` -> `2560x1440`
-- `4K` -> `3840x2160`
-- `8K` -> `7680x4320`
-- `custom` -> requires `width` and `height`
+- `360p` -> `640x360`, `600k` video, `64k` audio
+- `480p` -> `854x480`, `900k` video, `128k` audio
+- `720p` -> `1280x720`, `1200k` video, `128k` audio
+- `1080p` -> `1920x1080`, `4500k` video, `192k` audio
+- `2K` -> `2560x1440`, `8000k` video, `192k` audio
+- `4K` -> `3840x2160`, `16000k` video, `320k` audio
+- `8K` -> `7680x4320`, `40000k` video, `320k` audio
+- `custom` -> requires `width`, `height`, `video_bitrate`, and `audio_bitrate`
 
-If `width` and `height` are explicitly set in a profile, they override the preset defaults.
+If `width`, `height`, `video_bitrate`, or `audio_bitrate` are explicitly set in a profile, they override the preset defaults where applicable.
 
 ## Quality model
 
@@ -70,10 +68,3 @@ The user-facing `quality` setting maps to CRF values:
 - `custom` -> requires explicit `crf`
 
 CRF is applied for H.264 and H.265 outputs in v1.
-
-
-## Notes
-
-- Sample jobs point at `./input/source.mp4`. Replace that file with a real input video before running real transcodes.
-- Output directories are created automatically before execution.
-- The v1 implementation intentionally hides most raw `ffmpeg` flags.
