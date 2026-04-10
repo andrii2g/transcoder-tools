@@ -14,5 +14,11 @@ Version `0.1.0` supports:
 - validation before execution
 - dry-run output for generated commands
 - verbose mode for resolved config details
+- bundled preset files for `360p`, `480p`, `720p`, `1080p`, `2K`, `4K`, `8K`, and `custom`
+- default preset dimensions, video bitrates, audio bitrates, codecs, sample rate, and quality values
+- user-created preset files under `presets/`
+- custom preset selection with `preset=<name>` or `preset=<path>` in profile files
+- small profile files that can inherit defaults from preset files and only define output-specific values
+- profile-level overrides for preset dimensions, bitrates, codecs, sample rate, quality, and CRF
 
 Outputs are MP4-focused in v1.

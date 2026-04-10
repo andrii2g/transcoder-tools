@@ -4,10 +4,11 @@
 
 ## How it works
 
-`vtx` uses two config types:
+`vtx` uses three small config types:
 
 - job files
 - profile files
+- preset files
 
 A job file defines the shared input and execution settings. It can reference one or more output profile files:
 
@@ -15,26 +16,36 @@ A job file defines the shared input and execution settings. It can reference one
 input=./input/source.mp4
 ffmpeg=ffmpeg
 overwrite=true
-outputs=./profiles/example-1080p.conf,./profiles/example-custom.conf
+outputs=./profiles/example-1080p.conf,./profiles/example-custom-preset.conf
 ```
 
-Each profile is self-contained and includes its own `output=` field:
+Each profile defines one output and references a preset:
 
 ```config
-name=1080p-h264-aac
+name=1080p-output
 preset=1080p
+output=./out/source-1080p.mp4
+```
+
+The preset provides reusable transcoding defaults:
+
+```config
+name=1080p
+width=1920
+height=1080
 video_codec=h264
 audio_codec=aac
+video_bitrate=4500k
+audio_bitrate=192k
 audio_sample_rate=48000
 quality=standard
-output=./out/source-1080p.mp4
 ```
 
 The first implementation resolves each profile independently and executes one `ffmpeg` command per output, sequentially.
 
 ## Presets
 
-Supported preset names:
+Bundled preset names:
 
 - `360p`
 - `480p`
@@ -54,9 +65,11 @@ Resolved mappings in v1:
 - `2K` -> `2560x1440`, `8000k` video, `192k` audio
 - `4K` -> `3840x2160`, `16000k` video, `320k` audio
 - `8K` -> `7680x4320`, `40000k` video, `320k` audio
-- `custom` -> requires `width`, `height`, `video_bitrate`, and `audio_bitrate`
+- `custom` -> template for user-defined values
 
-If `width`, `height`, `video_bitrate`, or `audio_bitrate` are explicitly set in a profile, they override the preset defaults where applicable.
+You can copy any preset file or create a new one under `presets/`, then reference it from a profile with `preset=<name>`.
+
+Profile values override preset values where applicable.
 
 ## Quality model
 

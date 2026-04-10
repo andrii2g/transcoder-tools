@@ -32,26 +32,36 @@ validate_profile_config() {
   local profile_name="$2"
   local -n profile_ref="$profile_name"
   local preset_input
-  local normalized_preset
+  local profile_display_name
   local quality_input
   local normalized_quality
   local width
   local height
-  local video_bitrate
-  local audio_bitrate
 
   read_config_file "$profile_path" "$profile_name"
   print_config_map "Resolved profile config from $profile_path" "$profile_name"
 
-  [[ -n "$(config_get "$profile_name" name)" ]] || die "Profile field name is required: $profile_path"
+  profile_display_name="$(config_get "$profile_name" name)"
+  [[ -n "$profile_display_name" ]] || die "Profile field name is required: $profile_path"
   [[ -n "$(config_get "$profile_name" output)" ]] || die "Profile field output is required: $profile_path"
-  [[ -n "$(config_get "$profile_name" video_codec)" ]] || die "Profile field video_codec is required: $profile_path"
-  [[ -n "$(config_get "$profile_name" audio_codec)" ]] || die "Profile field audio_codec is required: $profile_path"
 
   preset_input="$(config_get "$profile_name" preset)"
-  [[ -n "$preset_input" ]] || die "Profile field preset is required: $profile_path"
-  normalized_preset="$(normalize_preset_name "$preset_input")" || die "Unsupported preset in $profile_path: $preset_input"
-  profile_ref[preset]="$normalized_preset"
+  if [[ -z "$preset_input" ]]; then
+    if preset_file_for "$profile_display_name" >/dev/null 2>&1; then
+      preset_input="$profile_display_name"
+      profile_ref[preset]="$preset_input"
+    else
+      die "Profile field preset is required: $profile_path"
+    fi
+  fi
+
+  apply_profile_preset_defaults "$profile_name" "$preset_input"
+  print_config_map "Profile config after applying preset defaults from $preset_input" "$profile_name"
+
+  [[ -n "$(config_get "$profile_name" video_codec)" ]] || die "Profile or preset field video_codec is required: $profile_path"
+  [[ -n "$(config_get "$profile_name" audio_codec)" ]] || die "Profile or preset field audio_codec is required: $profile_path"
+  [[ -n "$(config_get "$profile_name" video_bitrate)" ]] || die "Profile or preset field video_bitrate is required: $profile_path"
+  [[ -n "$(config_get "$profile_name" audio_bitrate)" ]] || die "Profile or preset field audio_bitrate is required: $profile_path"
 
   quality_input="$(config_get "$profile_name" quality standard)"
   normalized_quality="$(normalize_quality_name "$quality_input")" || die "Unsupported quality in $profile_path: $quality_input"
@@ -59,20 +69,10 @@ validate_profile_config() {
 
   width="$(config_get "$profile_name" width)"
   height="$(config_get "$profile_name" height)"
-  video_bitrate="$(config_get "$profile_name" video_bitrate)"
-  audio_bitrate="$(config_get "$profile_name" audio_bitrate)"
 
-  if [[ "$normalized_preset" == "custom" ]]; then
-    [[ -n "$width" && -n "$height" ]] || die "preset=custom requires width and height in $profile_path"
-    [[ -n "$video_bitrate" ]] || die "preset=custom requires video_bitrate in $profile_path"
-    [[ -n "$audio_bitrate" ]] || die "preset=custom requires audio_bitrate in $profile_path"
-  fi
-
-  if [[ -n "$width" || -n "$height" ]]; then
-    [[ -n "$width" && -n "$height" ]] || die "width and height must both be set in $profile_path"
-    [[ "$width" =~ ^[0-9]+$ ]] || die "width must be numeric in $profile_path"
-    [[ "$height" =~ ^[0-9]+$ ]] || die "height must be numeric in $profile_path"
-  fi
+  [[ -n "$width" && -n "$height" ]] || die "Profile or preset fields width and height are required: $profile_path"
+  [[ "$width" =~ ^[0-9]+$ ]] || die "width must be numeric in $profile_path"
+  [[ "$height" =~ ^[0-9]+$ ]] || die "height must be numeric in $profile_path"
 
   if [[ "$normalized_quality" == "custom" ]]; then
     [[ -n "$(config_get "$profile_name" crf)" ]] || die "quality=custom requires crf in $profile_path"

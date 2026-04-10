@@ -7,7 +7,7 @@ Rules:
 - blank lines are ignored
 - lines beginning with `#` are ignored
 - keys and values are trimmed
-- one file contains one job or one output profile
+- one file contains one job, one output profile, or one preset
 
 ## Job files
 
@@ -19,7 +19,7 @@ Example:
 input=./input/source.mp4
 ffmpeg=ffmpeg
 overwrite=true
-outputs=./profiles/example-1080p.conf,./profiles/example-custom.conf
+outputs=./profiles/example-1080p.conf,./profiles/example-custom-preset.conf
 ```
 
 ### Job fields
@@ -43,71 +43,114 @@ outputs=./profiles/example-1080p.conf,./profiles/example-custom.conf
 
 Profile files define one output video.
 
-Example using preset bitrate defaults:
+Minimal profile using preset defaults:
 
 ```config
-name=720p-h264-aac
+name=720p-output
 preset=720p
-video_codec=h264
-audio_codec=aac
-audio_sample_rate=48000
-quality=standard
 output=./out/source-720p.mp4
 ```
 
-Example overriding preset bitrate defaults:
+Profile overriding preset defaults:
 
 ```config
 name=720p-h264-aac-custom-bitrate
 preset=720p
-video_codec=h264
-audio_codec=aac
 video_bitrate=2500k
 audio_bitrate=128k
-audio_sample_rate=48000
-quality=standard
+quality=high
 output=./out/source-720p.mp4
 ```
 
 ### Required profile fields
 
 - `name`
-- `preset`
-- `video_codec`
-- `audio_codec`
 - `output`
 
-### Required only for `preset=custom`
+### Preset selection
+
+Use `preset=<name>` to load `./presets/<name>.conf`.
+
+You can also use a direct file path:
+
+```config
+preset=./presets/social-square.conf
+```
+
+If `preset=` is omitted, `vtx` tries to use the profile `name` as the preset name. Explicit `preset=` is recommended for readability.
+
+### Required after preset resolution
+
+The final resolved profile must have:
 
 - `width`
 - `height`
+- `video_codec`
+- `audio_codec`
 - `video_bitrate`
 - `audio_bitrate`
+
+These values can come from the preset file, the profile file, or both.
 
 ### Optional profile fields
 
+- `preset`
+- `width`
+- `height`
+- `video_codec`
+- `audio_codec`
 - `video_bitrate`
-  - overrides preset default for known presets
 - `audio_bitrate`
-  - overrides preset default for known presets
 - `audio_sample_rate`
 - `quality`
   - defaults to `standard`
 - `crf`
   - required only when `quality=custom`
-- `width`
-- `height`
+
+## Preset files
+
+Preset files define reusable transcoding defaults.
+
+Example custom preset:
+
+```config
+name=social-square
+width=1080
+height=1080
+video_codec=h264
+audio_codec=aac
+video_bitrate=1800k
+audio_bitrate=128k
+audio_sample_rate=48000
+quality=high
+description=Square social media export
+```
+
+Save it as:
+
+```text
+presets/social-square.conf
+```
+
+Then use it from a profile:
+
+```config
+name=social-square-output
+preset=social-square
+output=./out/source-social-square.mp4
+```
 
 ## Override rules
 
-Preset dimensions and bitrates are the default source of `width`, `height`, `video_bitrate`, and `audio_bitrate`.
+Preset values are defaults. Profile values win.
 
 Rules in v1:
 
-- `preset=custom` requires `width`, `height`, `video_bitrate`, and `audio_bitrate`
 - if either `width` or `height` is set, both must be set
-- explicit `width` and `height` override preset dimensions
-- explicit `video_bitrate` and `audio_bitrate` override preset bitrates independently
+- explicit profile dimensions override preset dimensions
+- explicit profile bitrates override preset bitrates independently
+- explicit profile codecs override preset codecs
+- `quality=custom` requires `crf=<value>`
 
 ## Codec mapping
 

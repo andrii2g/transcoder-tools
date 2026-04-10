@@ -14,10 +14,9 @@ The main CLI is `vtx`, a config-driven video transcoder that turns one input vid
 
 ## Quick start
 
-Requirements:
+Requirements: Bash 4+ and `ffmpeg`.
 
-- Bash 4+
-- `ffmpeg`
+See [Installation](docs/installation.md) for `ffmpeg` setup, executable permissions, and optional `PATH` configuration.
 
 Basic usage:
 
@@ -79,13 +78,10 @@ transcoder-tools/
 
 ## Documentation
 
+- [Installation](docs/installation.md): ffmpeg setup and vtx shell configuration
 - [CLI reference](docs/cli.md): commands, flags, and examples
 - [Core concepts](docs/concepts.md): how jobs, profiles, presets, and quality values work
 - [Config format](docs/config-format.md): required fields, optional fields, and override rules
 - [Preset details](docs/presets.md): preset dimensions, width/height overrides, and codec mappings
 - [Roadmap](docs/roadmap.md): planned HLS, live OBS, and adaptive streaming work
 - [Changelog](CHANGELOG.md): version-specific release notes
-
-
-
-

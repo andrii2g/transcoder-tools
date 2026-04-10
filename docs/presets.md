@@ -2,26 +2,85 @@
 
 `vtx` provides a small set of normalized output presets so users can think in common delivery sizes and bandwidth targets instead of raw scale and bitrate flags.
 
-## Supported presets
+Preset files live in `presets/` and use the same simple `key=value` format as jobs and profiles.
 
-| Preset | Dimensions | Video bitrate | Audio bitrate | Notes |
-| --- | --- | --- | --- | --- |
-| `360p` | `640x360` | `600k` | `64k` | Low-resolution web and mobile profile |
-| `480p` | `854x480` | `900k` | `128k` | Standard definition profile |
-| `720p` | `1280x720` | `1200k` | `128k` | HD profile |
-| `1080p` | `1920x1080` | `4500k` | `192k` | Full HD profile |
-| `2K` | `2560x1440` | `8000k` | `192k` | In `vtx`, `2K` is intentionally treated as a practical QHD-style preset |
-| `4K` | `3840x2160` | `16000k` | `320k` | Ultra HD |
-| `8K` | `7680x4320` | `40000k` | `320k` | Very high resolution output |
-| `custom` | user-defined | required | required | Requires explicit `width`, `height`, `video_bitrate`, and `audio_bitrate` |
+## Supported bundled presets
 
-The bitrate defaults are intentionally practical starting points, not strict delivery recommendations for every source. Use explicit profile values when you need tighter control.
+| Preset | Dimensions | Video bitrate | Audio bitrate | Default codecs | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `360p` | `640x360` | `600k` | `64k` | `h264` / `aac` | Low-resolution web and mobile profile |
+| `480p` | `854x480` | `900k` | `128k` | `h264` / `aac` | Standard definition profile |
+| `720p` | `1280x720` | `1200k` | `128k` | `h264` / `aac` | HD profile |
+| `1080p` | `1920x1080` | `4500k` | `192k` | `h264` / `aac` | Full HD profile |
+| `2K` | `2560x1440` | `8000k` | `192k` | `h264` / `aac` | In `vtx`, `2K` is intentionally treated as a practical QHD-style preset |
+| `4K` | `3840x2160` | `16000k` | `320k` | `h265` / `aac` | Ultra HD |
+| `8K` | `7680x4320` | `40000k` | `320k` | `h265` / `aac` | Very high resolution output |
+| `custom` | user-defined | required | required | required | Template requiring explicit dimensions, codecs, and bitrates |
 
-## Width, height, and bitrate overrides
+The bitrate defaults are practical starting points, not strict delivery recommendations for every source. Use explicit profile values or a custom preset when you need tighter control.
 
-Profiles can override preset dimensions by setting both `width` and `height`.
+## Custom preset files
 
-Profiles can also override preset bandwidth defaults by setting `video_bitrate`, `audio_bitrate`, or both.
+You can create your own reusable presets by copying a bundled preset file or creating a new file under `presets/`.
+
+Example:
+
+```bash
+cp ./presets/720p.conf ./presets/social-square.conf
+```
+
+Then edit the new preset:
+
+```config
+name=social-square
+width=1080
+height=1080
+video_codec=h264
+audio_codec=aac
+video_bitrate=1800k
+audio_bitrate=128k
+audio_sample_rate=48000
+quality=high
+description=Square social media export
+```
+
+Reference it from a profile:
+
+```config
+name=social-square-output
+preset=social-square
+output=./out/source-social-square.mp4
+```
+
+The profile can stay small because the preset provides the dimensions, codecs, bitrates, sample rate, and quality.
+
+## Preset lookup
+
+`preset=<name>` loads `./presets/<name>.conf` from the repository root.
+
+Examples:
+
+```config
+preset=720p
+preset=social-square
+preset=square-h264-aac
+```
+
+You can also point directly to a preset file path:
+
+```config
+preset=./presets/social-square.conf
+```
+
+If a profile omits `preset=`, `vtx` will try to use the profile `name` as a preset name. This is convenient for very small output profiles, but explicit `preset=` is clearer and recommended.
+
+## Override rules
+
+Preset values are defaults. Profile values win.
+
+A profile can override preset dimensions by setting both `width` and `height`.
+
+A profile can override preset bandwidth defaults by setting `video_bitrate`, `audio_bitrate`, or both.
 
 Example:
 
@@ -30,19 +89,17 @@ name=wide-720-override
 preset=720p
 width=1024
 height=576
-video_codec=h264
-audio_codec=aac
 video_bitrate=2200k
-audio_bitrate=128k
 output=./out/wide-override.mp4
 ```
 
 Rules:
 
 - both `width` and `height` must be present together
-- `preset=custom` always requires `width`, `height`, `video_bitrate`, and `audio_bitrate`
-- explicit dimensions win over preset dimensions
-- explicit bitrates win over preset bitrates
+- resolved profiles must have `width`, `height`, `video_codec`, `audio_codec`, `video_bitrate`, and `audio_bitrate`
+- explicit profile dimensions win over preset dimensions
+- explicit profile bitrates win over preset bitrates
+- explicit profile codecs win over preset codecs
 
 ## Codec mappings
 
