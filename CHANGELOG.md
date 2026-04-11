@@ -13,6 +13,7 @@ Version `0.5.0` adds:
 - job-level HLS settings: `hls_segment_time`, `hls_playlist_type`, `hls_flags`, and required `hls_master_playlist`
 - HLS documentation in `docs/hls.md`
 - simple browser HLS test player in `docs/hls-player.html`
+- workflow guide with Mermaid decision diagram in `docs/workflows.md`
 
 ## 0.4.0
 

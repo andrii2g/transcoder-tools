@@ -18,6 +18,8 @@ Requirements: Bash 4+ and `ffmpeg`.
 
 See [Installation](docs/installation.md) for `ffmpeg` setup, executable permissions, and optional `PATH` configuration.
 
+Not sure which example to start with? See the [Workflow guide](docs/workflows.md) for a Mermaid decision diagram covering basic, multi-video, multi-output, and HLS jobs.
+
 Basic usage:
 
 ```bash
@@ -88,6 +90,7 @@ transcoder-tools/
 
 - [Installation](docs/installation.md): ffmpeg setup and vtx shell configuration
 - [CLI reference](docs/cli.md): commands, flags, and examples
+- [Workflow guide](docs/workflows.md): decision diagram for choosing basic, multi-video, multi-output, or HLS jobs
 - [Core concepts](docs/concepts.md): how jobs, profiles, presets, and quality values work
 - [Config format](docs/config-format.md): required fields, optional fields, and override rules
 - [HLS mode](docs/hls.md): HLS jobs, variant playlists, segments, master playlists, and the browser test player
