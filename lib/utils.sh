@@ -147,6 +147,22 @@ split_words() {
   read -r -a out_ref <<< "$input"
 }
 
+shell_quote_for_display() {
+  local value="$1"
+  if [[ -z "$value" ]]; then
+    printf "''"
+    return 0
+  fi
+
+  if [[ "$value" =~ ^[A-Za-z0-9_./:=+,%@-]+$ ]]; then
+    printf '%s' "$value"
+    return 0
+  fi
+
+  value="${value//\'/\'\\\'\'}"
+  printf "'%s'" "$value"
+}
+
 join_command_for_display() {
   local result=""
   local part
@@ -154,8 +170,7 @@ join_command_for_display() {
     if [[ -n "$result" ]]; then
       result+=" "
     fi
-    printf -v part '%q' "$part"
-    result+="$part"
+    result+="$(shell_quote_for_display "$part")"
   done
   printf '%s' "$result"
 }
