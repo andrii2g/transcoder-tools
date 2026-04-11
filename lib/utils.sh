@@ -78,6 +78,45 @@ require_command() {
   command -v "$cmd" >/dev/null 2>&1 || die "Required command not found: $cmd"
 }
 
+detect_cpu_cores() {
+  local cores=""
+  if command -v nproc >/dev/null 2>&1; then
+    cores="$(nproc 2>/dev/null || true)"
+  elif command -v getconf >/dev/null 2>&1; then
+    cores="$(getconf _NPROCESSORS_ONLN 2>/dev/null || true)"
+  elif [[ -n "${NUMBER_OF_PROCESSORS:-}" ]]; then
+    cores="$NUMBER_OF_PROCESSORS"
+  fi
+
+  if [[ ! "$cores" =~ ^[0-9]+$ || "$cores" -lt 1 ]]; then
+    cores=1
+  fi
+
+  printf '%s' "$cores"
+}
+
+resolve_cpu_threads() {
+  local cpu_limit="$1"
+  local cores
+  local percent
+  local threads
+
+  [[ -n "$cpu_limit" ]] || return 1
+  cpu_limit="$(trim "$cpu_limit")"
+  [[ "$cpu_limit" =~ ^[0-9]+%$ ]] || die "cpu_limit must be a percentage like 50%"
+
+  percent="${cpu_limit%%%}"
+  [[ "$percent" -ge 1 && "$percent" -le 100 ]] || die "cpu_limit must be between 1% and 100%"
+
+  cores="$(detect_cpu_cores)"
+  threads=$(( (cores * percent + 99) / 100 ))
+  if [[ "$threads" -lt 1 ]]; then
+    threads=1
+  fi
+
+  printf '%s' "$threads"
+}
+
 split_csv() {
   local input="$1"
   local out_name="$2"
@@ -99,7 +138,6 @@ ensure_parent_dir() {
   mkdir -p "$parent"
 }
 
-
 split_words() {
   local input="$1"
   local out_name="$2"
@@ -108,8 +146,8 @@ split_words() {
   [[ -n "$input" ]] || return 0
   read -r -a out_ref <<< "$input"
 }
-join_command_for_display() {
 
+join_command_for_display() {
   local result=""
   local part
   for part in "$@"; do

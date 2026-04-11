@@ -13,6 +13,8 @@ resolve_profile_runtime() {
   local quality
   local crf_value
   local video_filter
+  local cpu_limit
+  local cpu_threads
 
   preset="$(config_get "$profile_name" preset)"
   resolve_dimensions \
@@ -48,9 +50,20 @@ resolve_profile_runtime() {
   profile_ref[resolved_crf]="$crf_value"
   profile_ref[resolved_video_filter]="$video_filter"
 
+  cpu_limit="$(config_get "$profile_name" cpu_limit)"
+  if [[ -n "$cpu_limit" ]]; then
+    cpu_threads="$(resolve_cpu_threads "$cpu_limit")"
+    profile_ref[resolved_cpu_threads]="$cpu_threads"
+  else
+    profile_ref[resolved_cpu_threads]=""
+  fi
+
   log_verbose "Profile $(config_get "$profile_name" name) resolved preset=${preset} width=${width} height=${height}"
   log_verbose "Profile $(config_get "$profile_name" name) bitrate map video=${video_bitrate} audio=${audio_bitrate}"
   log_verbose "Profile $(config_get "$profile_name" name) filter=${video_filter}"
+  if [[ -n "${profile_ref[resolved_cpu_threads]}" ]]; then
+    log_verbose "Profile $(config_get "$profile_name" name) cpu_limit=${cpu_limit} threads=${profile_ref[resolved_cpu_threads]} cores=$(detect_cpu_cores)"
+  fi
   log_verbose "Profile $(config_get "$profile_name" name) codec map video=${video_codec} audio=${audio_codec} crf=${crf_value}"
 }
 
@@ -79,6 +92,10 @@ build_ffmpeg_command() {
     cmd_ref+=("-y")
   else
     cmd_ref+=("-n")
+  fi
+
+  if [[ -n "${profile_ref[resolved_cpu_threads]}" ]]; then
+    cmd_ref+=("-threads" "${profile_ref[resolved_cpu_threads]}")
   fi
 
   cmd_ref+=(

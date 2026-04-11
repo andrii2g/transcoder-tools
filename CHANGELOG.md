@@ -20,6 +20,7 @@ Version `0.2.0` adds:
 - example advanced-filter job and profile files
 - example presets under `presets/examples/` to keep bundled presets separate
 - `audio_sample_rate=source` to preserve source audio sample rate by omitting `-ar`
+- profile-only `cpu_limit=<percent>%` to resolve a best-effort FFmpeg `-threads` value from detected CPU cores
 
 ## 0.1.0
 

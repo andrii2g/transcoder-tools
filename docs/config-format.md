@@ -72,9 +72,24 @@ Optional profile fields:
 - `video_bitrate` and `audio_bitrate`
 - `audio_sample_rate`
 - `quality`, defaults to `standard`
+- `cpu_limit`, optional percentage such as `50%`
 - `crf`, required only when `quality=custom`
 
 Advanced ffmpeg fields such as `video_filter` and `extra_output_args` are not allowed in profile files. Put them in custom preset files instead.
+
+## CPU limit
+
+Use `cpu_limit` when you want a transcode to be less aggressive on the current machine.
+
+```config
+cpu_limit=50%
+```
+
+`vtx` detects the number of CPU cores and converts the percentage to FFmpeg `-threads N`. For example, `cpu_limit=50%` on an 8-core machine resolves to `-threads 4`.
+
+This is a best-effort processing limit, not a hard operating-system CPU cap. Actual CPU usage still depends on codec, filters, disk speed, and FFmpeg internals.
+
+`cpu_limit` is profile-only because it controls the process load for a specific output run, not the media preset itself.
 
 ## Audio sample rate
 
@@ -148,6 +163,7 @@ Rules in v1:
 - explicit profile bitrates override preset bitrates independently
 - explicit profile codecs override preset codecs
 - explicit profile `audio_sample_rate` overrides preset sample rate
+- `cpu_limit` is profile-only and is not inherited from preset files
 - `audio_sample_rate=source` preserves source sample rate by omitting `-ar`
 - `quality=custom` requires `crf=<value>`
 

@@ -56,7 +56,7 @@ Resolve and validate the job, then print generated `ffmpeg` commands without exe
 
 ### `--verbose`
 
-Print resolved config values, preset dimensions, codec mappings, bitrate mappings, and execution details.
+Print resolved config values, preset dimensions, codec mappings, bitrate mappings, CPU thread resolution, and execution details.
 
 ```bash
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose

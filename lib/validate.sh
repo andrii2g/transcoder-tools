@@ -38,6 +38,7 @@ validate_profile_config() {
   local width
   local height
   local audio_sample_rate
+  local cpu_limit
 
   read_config_file "$profile_path" "$profile_name"
   print_config_map "Resolved profile config from $profile_path" "$profile_name"
@@ -81,6 +82,13 @@ validate_profile_config() {
   audio_sample_rate="$(config_get "$profile_name" audio_sample_rate)"
   if [[ -n "$audio_sample_rate" && "$audio_sample_rate" != "source" ]]; then
     [[ "$audio_sample_rate" =~ ^[0-9]+$ ]] || die "audio_sample_rate must be numeric or source in $profile_path"
+  fi
+
+  cpu_limit="$(config_get "$profile_name" cpu_limit)"
+  if [[ -n "$cpu_limit" ]]; then
+    [[ "$cpu_limit" =~ ^[0-9]+%$ ]] || die "cpu_limit must be a percentage like 50% in $profile_path"
+    local cpu_percent="${cpu_limit%%%}"
+    [[ "$cpu_percent" -ge 1 && "$cpu_percent" -le 100 ]] || die "cpu_limit must be between 1% and 100% in $profile_path"
   fi
 
   if [[ "$normalized_quality" == "custom" ]]; then

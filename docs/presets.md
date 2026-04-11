@@ -92,6 +92,7 @@ output=./out/source-480p-contained.mp4
 
 `extra_output_args` is parsed as simple whitespace-separated arguments. Keep complex shell quoting out of config files in v1.
 
+
 ## Audio sample rate
 
 Preset files can define `audio_sample_rate=48000`, which is the default used by bundled presets.
