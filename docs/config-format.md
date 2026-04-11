@@ -31,9 +31,9 @@ Job fields:
 - `overwrite`: optional boolean, defaults to `false`
 - `cpu_limit`: optional job-level percentage such as `50%`
 - `outputs`: required comma-separated list of profile file paths
-- `hls_segment_time`: optional for `mode=hls`, defaults to `6`
-- `hls_playlist_type`: optional for `mode=hls`, defaults to `vod`
-- `hls_flags`: optional for `mode=hls`, defaults to `independent_segments`
+- `hls_segment_time`: optional for `mode=hls`, defaults to `6`; target segment length in seconds
+- `hls_playlist_type`: optional for `mode=hls`, defaults to `vod`; use `vod` for finished files and `event` for event-style playlists that grow over time
+- `hls_flags`: optional for `mode=hls`, defaults to `independent_segments`; FFmpeg HLS muxer flags for segment behavior
 - `hls_master_playlist`: required for `mode=hls`, path to the generated master playlist
 
 ## Modes
