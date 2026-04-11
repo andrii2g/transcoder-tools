@@ -31,6 +31,10 @@ Job fields:
 - `overwrite`: optional boolean, defaults to `false`
 - `cpu_limit`: optional job-level percentage such as `50%`
 - `outputs`: required comma-separated list of profile file paths
+- `hls_segment_time`: optional for `mode=hls`, defaults to `6`
+- `hls_playlist_type`: optional for `mode=hls`, defaults to `vod`
+- `hls_flags`: optional for `mode=hls`, defaults to `independent_segments`
+- `hls_master_playlist`: required for `mode=hls`, path to the generated master playlist
 
 ## Modes
 
@@ -48,6 +52,18 @@ mode=multi-output
 
 Use `multi-output` when you want one source video converted into several MP4 outputs in one FFmpeg process.
 
+`mode=hls` builds one FFmpeg command that creates one HLS variant playlist per profile. Profile `output=` values must end with `.m3u8`.
+
+```config
+mode=hls
+hls_segment_time=6
+hls_playlist_type=vod
+hls_flags=independent_segments
+hls_master_playlist=./out/hls/master.m3u8
+```
+
+Use `hls` when you want multiple streaming renditions and segment playlists for an HLS player. See [HLS mode](hls.md) for details.
+
 ## CPU limit
 
 Use job-level `cpu_limit` when you want a transcode run to be less aggressive on the current machine.
@@ -64,7 +80,7 @@ This is a best-effort processing limit, not a hard operating-system CPU cap. Act
 
 ## Profile files
 
-Profile files define one output video.
+Profile files define one output. In `sequential` and `multi-output` modes that output is normally an MP4 file. In `hls` mode it is a variant `.m3u8` playlist.
 
 Minimal profile using preset defaults:
 
@@ -89,7 +105,7 @@ output=./out/source-720p.mp4
 Required profile fields:
 
 - `name`
-- `output`
+- `output`, usually an MP4 path; for `mode=hls`, this must be a `.m3u8` playlist path
 
 Use `preset=<name>` to load `./presets/<name>.conf`. You can also use a direct path such as `preset=./presets/examples/social-square.conf`.
 

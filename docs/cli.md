@@ -46,7 +46,7 @@ Run a transcode job.
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf
 ```
 
-By default, jobs use `mode=sequential`, which runs one FFmpeg command per output profile. Jobs can also use `mode=multi-output`, which builds one FFmpeg command for all output profiles.
+By default, jobs use `mode=sequential`, which runs one FFmpeg command per output profile. Jobs can also use `mode=multi-output`, which builds one MP4-oriented FFmpeg command for all output profiles, or `mode=hls`, which creates HLS variant playlists and segments.
 
 ### `--dry-run`
 
@@ -121,6 +121,12 @@ Generate one multi-output FFmpeg command:
 
 ```bash
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output-mode.conf --dry-run --verbose
+```
+
+Generate an HLS command and planned master playlist:
+
+```bash
+./bin/vtx.sh transcode --job ./jobs/example-hls.conf --dry-run --verbose
 ```
 
 Run multiple outputs sequentially and save detailed logs:

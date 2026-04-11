@@ -34,7 +34,7 @@ validate_job_config() {
 
   mode_value="$(config_get "$job_name" mode sequential)"
   case "$mode_value" in
-    sequential|multi-output) job_ref[mode]="$mode_value" ;;
+    sequential|multi-output|hls) job_ref[mode]="$mode_value" ;;
     *) die "Unsupported mode in $job_path: $mode_value" ;;
   esac
 
@@ -43,11 +43,46 @@ validate_job_config() {
     validate_cpu_limit_value "$cpu_limit" "$job_path"
   fi
 
+  if [[ "$mode_value" == "hls" ]]; then
+    validate_hls_job_fields "$job_name" "$job_path"
+  fi
+
   local ffmpeg_bin
   ffmpeg_bin="$(config_get "$job_name" ffmpeg ffmpeg)"
   [[ -n "$ffmpeg_bin" ]] || die "Job field ffmpeg cannot be empty"
 }
 
+validate_hls_job_fields() {
+  local job_name="$1"
+  local job_path="$2"
+  local segment_time
+  local playlist_type
+  local master_playlist
+
+  segment_time="$(config_get "$job_name" hls_segment_time 6)"
+  [[ "$segment_time" =~ ^[0-9]+$ && "$segment_time" -ge 1 ]] || die "hls_segment_time must be a positive number in $job_path"
+
+  playlist_type="$(config_get "$job_name" hls_playlist_type vod)"
+  case "$playlist_type" in
+    vod|event) ;;
+    *) die "hls_playlist_type must be vod or event in $job_path" ;;
+  esac
+
+  master_playlist="$(config_get "$job_name" hls_master_playlist)"
+  [[ -n "$master_playlist" ]] || die "hls_master_playlist is required when mode=hls in $job_path"
+  if [[ "$master_playlist" != *.m3u8 ]]; then
+    die "hls_master_playlist must end with .m3u8 in $job_path"
+  fi
+}
+
+validate_hls_profile_output() {
+  local profile_path="$1"
+  local profile_name="$2"
+  local output_path
+
+  output_path="$(config_get "$profile_name" output)"
+  [[ "$output_path" == *.m3u8 ]] || die "HLS profile output must be a .m3u8 playlist: $profile_path"
+}
 validate_profile_config() {
   local profile_path="$1"
   local profile_name="$2"

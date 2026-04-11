@@ -48,6 +48,8 @@ quality=standard
 
 `mode=multi-output` builds one FFmpeg command for all output profiles. It is useful when one source video should produce several MP4 renditions in one process. The command uses optional audio mapping (`-map 0:a?`) so source videos without audio do not fail only because audio is missing.
 
+`mode=hls` builds one FFmpeg command that creates one HLS variant playlist per profile. Each profile output is a `.m3u8` playlist, and segments are generated next to that playlist. A job can also request a generated master playlist with `hls_master_playlist=...`.
+
 ## Presets
 
 Bundled preset names:

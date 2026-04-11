@@ -10,7 +10,7 @@ The main CLI is `vtx`, a config-driven video transcoder that turns one input vid
 
 - user-friendly abstraction over raw `ffmpeg` flags
 - config-driven jobs that are easy to save and rerun
-- simple first version that stays extensible for HLS, live, and OBS workflows (planned)
+- simple first version that supports MP4 and HLS workflows while staying extensible for live and OBS workflows
 
 ## Quick start
 
@@ -26,6 +26,7 @@ Basic usage:
 ./bin/vtx.sh validate --job ./jobs/example-multi-output.conf
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --dry-run
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose --log ./logs/transcode.log
+./bin/vtx.sh transcode --job ./jobs/example-hls.conf --dry-run --verbose
 ```
 
 Make the script executable on Linux if needed:
@@ -80,6 +81,7 @@ transcoder-tools/
 ./bin/vtx.sh validate --job ./jobs/example-multi-output.conf
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf
 ./bin/vtx.sh transcode --job ./jobs/example-custom.conf --dry-run --verbose
+./bin/vtx.sh transcode --job ./jobs/example-hls.conf --dry-run --verbose
 ```
 
 ## Documentation
@@ -88,7 +90,8 @@ transcoder-tools/
 - [CLI reference](docs/cli.md): commands, flags, and examples
 - [Core concepts](docs/concepts.md): how jobs, profiles, presets, and quality values work
 - [Config format](docs/config-format.md): required fields, optional fields, and override rules
+- [HLS mode](docs/hls.md): HLS jobs, variant playlists, segments, and master playlists
 - [Preset details](docs/presets.md): preset dimensions, width/height overrides, and codec mappings
-- [Roadmap](docs/roadmap.md): planned HLS, live OBS, and adaptive streaming work
+- [Roadmap](docs/roadmap.md): planned live OBS and adaptive streaming work
 - [References](docs/references.md): external FFmpeg, HLS, CORS, and player resources
 - [Changelog](CHANGELOG.md): version-specific release notes
