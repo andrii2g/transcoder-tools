@@ -131,6 +131,26 @@ out/hls/
 
 In dry-run mode, `vtx` prints where the master playlist would be written but does not create files.
 
+## Testing playback
+
+The repository includes a simple browser test page at `docs/hls-player.html`.
+
+After generating HLS output, serve the repository root with a local static server:
+
+```bash
+python3 -m http.server 8080
+```
+
+Then open:
+
+```text
+http://localhost:8080/docs/hls-player.html?src=/out/hls/master.m3u8
+```
+
+The page accepts either a master playlist or a variant playlist. Safari can usually play HLS natively. Chrome, Edge, and Firefox use hls.js loaded from a CDN.
+
+Do not test HLS by opening `docs/hls-player.html` directly from the filesystem. Browser security rules and segment loading usually require HTTP.
+
 ## Current limitations
 
 - HLS mode currently writes MPEG-TS segments (`.ts`).

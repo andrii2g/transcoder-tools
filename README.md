@@ -90,7 +90,7 @@ transcoder-tools/
 - [CLI reference](docs/cli.md): commands, flags, and examples
 - [Core concepts](docs/concepts.md): how jobs, profiles, presets, and quality values work
 - [Config format](docs/config-format.md): required fields, optional fields, and override rules
-- [HLS mode](docs/hls.md): HLS jobs, variant playlists, segments, and master playlists
+- [HLS mode](docs/hls.md): HLS jobs, variant playlists, segments, master playlists, and the browser test player
 - [Preset details](docs/presets.md): preset dimensions, width/height overrides, and codec mappings
 - [Roadmap](docs/roadmap.md): planned live OBS and adaptive streaming work
 - [References](docs/references.md): external FFmpeg, HLS, CORS, and player resources

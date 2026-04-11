@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vtx HLS Player</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17211c;
+      --muted: #637068;
+      --paper: #fbf7ee;
+      --panel: #fffdf8;
+      --line: #ded7c8;
+      --accent: #276749;
+      --accent-strong: #17412d;
+      --danger: #a23b2a;
+      --shadow: 0 24px 80px rgba(36, 48, 40, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 15%, rgba(39, 103, 73, 0.16), transparent 32rem),
+        linear-gradient(135deg, #f7ead5 0%, var(--paper) 48%, #e8f1e8 100%);
+    }
+
+    main {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.4rem, 7vw, 5.5rem);
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+    }
+
+    .summary {
+      max-width: 760px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(255, 253, 248, 0.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .player-frame {
+      background: #111814;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #0a0d0b;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 13px 16px;
+      color: var(--ink);
+      background: #fffaf1;
+      font: 1rem "Trebuchet MS", Verdana, sans-serif;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(39, 103, 73, 0.12);
+    }
+
+    button {
+      align-self: end;
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 20px;
+      color: #fffaf1;
+      background: var(--accent);
+      cursor: pointer;
+      font: 700 0.95rem "Trebuchet MS", Verdana, sans-serif;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    button:hover {
+      background: var(--accent-strong);
+      transform: translateY(-1px);
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 253, 248, 0.72);
+      color: var(--muted);
+      font: 0.95rem/1.5 "Trebuchet MS", Verdana, sans-serif;
+    }
+
+    .status.error {
+      border-color: rgba(162, 59, 42, 0.3);
+      color: var(--danger);
+      background: rgba(255, 236, 229, 0.75);
+    }
+
+    .notes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .note {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255, 253, 248, 0.68);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      line-height: 1.45;
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+
+    code {
+      border-radius: 6px;
+      padding: 2px 5px;
+      background: rgba(39, 103, 73, 0.1);
+      color: var(--accent-strong);
+      font-family: Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 28px 0;
+      }
+
+      .controls,
+      .notes {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">vtx test utility</p>
+      <h1>HLS playlist player</h1>
+      <p class="summary">Use this page to test a generated <code>.m3u8</code> master playlist or variant playlist from a local vtx HLS output folder.</p>
+    </header>
+
+    <section class="card" aria-label="HLS player">
+      <div class="player-frame">
+        <video id="video" controls playsinline></video>
+      </div>
+      <form class="controls" id="load-form">
+        <div>
+          <label for="playlist-url">Playlist URL</label>
+          <input id="playlist-url" name="src" type="text" value="/out/hls/master.m3u8" placeholder="http://localhost:8080/out/hls/master.m3u8" required>
+        </div>
+        <button type="submit">Load playlist</button>
+      </form>
+    </section>
+
+    <p id="status" class="status">Serve the repository root over HTTP, then open this page and load <code>/out/hls/master.m3u8</code>.</p>
+
+    <section class="notes" aria-label="Testing notes">
+      <div class="note"><strong>Start server</strong>From the repository root, run <code>python3 -m http.server 8080</code> or any static web server.</div>
+      <div class="note"><strong>Open page</strong>Visit <code>http://localhost:8080/docs/hls-player.html?src=/out/hls/master.m3u8</code>.</div>
+      <div class="note"><strong>Browser support</strong>Safari uses native HLS. Other browsers use hls.js from a CDN.</div>
+    </section>
+  </main>
+
+  z
+  <script>
+    const video = document.getElementById('video');
+    const form = document.getElementById('load-form');
+    const input = document.getElementById('playlist-url');
+    const statusBox = document.getElementById('status');
+    let hls = null;
+
+    function setStatus(message, isError = false) {
+      statusBox.textContent = message;
+      statusBox.classList.toggle('error', isError);
+    }
+
+    function resolveInitialSource() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('src') || input.value;
+    }
+
+    function updateAddressBar(src) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('src', src);
+      window.history.replaceState({}, '', url);
+    }
+
+    function loadPlaylist(src) {
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+
+      video.removeAttribute('src');
+      video.load();
+
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = src;
+        setStatus(`Loaded with native HLS support: ${src}`);
+        return;
+      }
+
+      if (window.Hls && window.Hls.isSupported()) {
+        hls = new window.Hls();
+        hls.on(window.Hls.Events.ERROR, (_event, data) => {
+          const detail = data && data.details ? data.details : 'unknown error';
+          setStatus(`hls.js error: ${detail}`, true);
+        });
+        hls.loadSource(src);
+        hls.attachMedia(video);
+        setStatus(`Loaded with hls.js: ${src}`);
+        return;
+      }
+
+      setStatus('This browser does not support HLS playback and hls.js is not available.', true);
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const src = input.value.trim();
+      if (!src) {
+        setStatus('Enter a playlist URL ending with .m3u8.', true);
+        return;
+      }
+      updateAddressBar(src);
+      loadPlaylist(src);
+    });
+
+    const initialSource = resolveInitialSource();
+    input.value = initialSource;
+    loadPlaylist(initialSource);
+  </script>
+</body>
+</html>

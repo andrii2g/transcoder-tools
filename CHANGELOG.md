@@ -12,6 +12,7 @@ Version `0.5.0` adds:
 - HLS segment generation beside each profile playlist output
 - job-level HLS settings: `hls_segment_time`, `hls_playlist_type`, `hls_flags`, and required `hls_master_playlist`
 - HLS documentation in `docs/hls.md`
+- simple browser HLS test player in `docs/hls-player.html`
 
 ## 0.4.0
 
