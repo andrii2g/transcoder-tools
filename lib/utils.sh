@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VTX_VERSION="0.2.0"
+VTX_VERSION="0.4.0"
 VTX_VERBOSE=0
 VTX_LOG_FILE=""
 

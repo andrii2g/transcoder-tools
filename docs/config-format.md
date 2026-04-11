@@ -18,16 +18,49 @@ Example:
 ```config
 input=./input/source.mp4
 ffmpeg=ffmpeg
+mode=sequential
 overwrite=true
 outputs=./profiles/example-1080p.conf,./profiles/example-custom-preset.conf
 ```
 
-### Job fields
+Job fields:
 
 - `input`: required source media path
 - `ffmpeg`: optional ffmpeg executable, defaults to `ffmpeg`
+- `mode`: optional, defaults to `sequential`
 - `overwrite`: optional boolean, defaults to `false`
+- `cpu_limit`: optional job-level percentage such as `50%`
 - `outputs`: required comma-separated list of profile file paths
+
+## Modes
+
+`mode=sequential` is the default. It runs one FFmpeg command per profile, one after another.
+
+```config
+mode=sequential
+```
+
+`mode=multi-output` builds one FFmpeg command for all profiles. It uses `filter_complex`, `split`, and `-map 0:a?` so a missing source audio stream does not fail the command.
+
+```config
+mode=multi-output
+```
+
+Use `multi-output` when you want one source video converted into several MP4 outputs in one FFmpeg process.
+
+## CPU limit
+
+Use job-level `cpu_limit` when you want a transcode run to be less aggressive on the current machine.
+
+```config
+cpu_limit=50%
+```
+
+`vtx` detects the number of CPU cores and converts the percentage to FFmpeg `-threads N`. For example, `cpu_limit=50%` on an 8-core machine resolves to `-threads 4`.
+
+This is a best-effort processing limit, not a hard operating-system CPU cap. Actual CPU usage still depends on codec, filters, disk speed, and FFmpeg internals.
+
+`cpu_limit` is job-only because it controls one FFmpeg process. It is rejected in profile files.
 
 ## Profile files
 
@@ -72,24 +105,9 @@ Optional profile fields:
 - `video_bitrate` and `audio_bitrate`
 - `audio_sample_rate`
 - `quality`, defaults to `standard`
-- `cpu_limit`, optional percentage such as `50%`
 - `crf`, required only when `quality=custom`
 
 Advanced ffmpeg fields such as `video_filter` and `extra_output_args` are not allowed in profile files. Put them in custom preset files instead.
-
-## CPU limit
-
-Use `cpu_limit` when you want a transcode to be less aggressive on the current machine.
-
-```config
-cpu_limit=50%
-```
-
-`vtx` detects the number of CPU cores and converts the percentage to FFmpeg `-threads N`. For example, `cpu_limit=50%` on an 8-core machine resolves to `-threads 4`.
-
-This is a best-effort processing limit, not a hard operating-system CPU cap. Actual CPU usage still depends on codec, filters, disk speed, and FFmpeg internals.
-
-`cpu_limit` is profile-only because it controls the process load for a specific output run, not the media preset itself.
 
 ## Audio sample rate
 
@@ -130,7 +148,7 @@ Save it as `presets/examples/social-square.conf`, then use it from a profile:
 
 ```config
 name=social-square-output
-preset=social-square
+preset=./presets/examples/social-square.conf
 output=./out/source-social-square.mp4
 ```
 
@@ -163,7 +181,6 @@ Rules in v1:
 - explicit profile bitrates override preset bitrates independently
 - explicit profile codecs override preset codecs
 - explicit profile `audio_sample_rate` overrides preset sample rate
-- `cpu_limit` is profile-only and is not inherited from preset files
 - `audio_sample_rate=source` preserves source sample rate by omitting `-ar`
 - `quality=custom` requires `crf=<value>`
 

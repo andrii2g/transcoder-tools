@@ -10,7 +10,7 @@ Main entrypoint:
 
 ### `list-presets`
 
-Print all supported presets with resolved dimensions, default bitrates, and a short description.
+Print all supported root presets with resolved dimensions, default bitrates, and a short description.
 
 ```bash
 ./bin/vtx.sh list-presets
@@ -29,22 +29,24 @@ Validation checks include:
 - job file exists
 - input file exists
 - referenced profile files exist
+- job `mode` is supported
 - required profile fields are present after preset resolution
 - preset names or preset file paths are supported
 - dimensions and bitrate rules are valid
 - quality settings are valid
+- job-level `cpu_limit` is valid when present
 
 The command exits nonzero on failure.
 
 ### `transcode`
 
-Run one `ffmpeg` command per output profile, sequentially.
+Run a transcode job.
 
 ```bash
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf
 ```
 
-Each profile becomes one output file.
+By default, jobs use `mode=sequential`, which runs one FFmpeg command per output profile. Jobs can also use `mode=multi-output`, which builds one FFmpeg command for all output profiles.
 
 ### `--dry-run`
 
@@ -115,13 +117,13 @@ Generate commands only:
 ./bin/vtx.sh transcode --job ./jobs/example-custom.conf --dry-run --verbose
 ```
 
-Generate commands and save them to a log:
+Generate one multi-output FFmpeg command:
 
 ```bash
-./bin/vtx.sh transcode --job ./jobs/example-custom.conf --dry-run --verbose --log ./logs/custom-dry-run.log
+./bin/vtx.sh transcode --job ./jobs/example-multi-output-mode.conf --dry-run --verbose
 ```
 
-Run multiple outputs from one input and save detailed logs:
+Run multiple outputs sequentially and save detailed logs:
 
 ```bash
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose --log ./logs/multi-output.log

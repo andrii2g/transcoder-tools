@@ -2,6 +2,19 @@
 
 All notable changes to `transcoder-tools` are documented here.
 
+## 0.4.0
+
+Added multi-output transcode mode.
+
+Version `0.4.0` adds:
+
+- `mode=multi-output` for producing multiple MP4 outputs from one input in a single FFmpeg process
+- default `mode=sequential` behavior preserved for existing jobs
+- multi-output command generation using `filter_complex`, `split`, and per-output stream mapping
+- optional audio mapping with `-map 0:a?` so source videos without audio do not fail only because audio is missing
+- job-level `cpu_limit=<percent>%`; profile-level `cpu_limit` is rejected
+- example multi-output mode job file
+
 ## 0.3.0
 
 Added profile-level CPU management for transcode runs.
@@ -9,8 +22,11 @@ Added profile-level CPU management for transcode runs.
 Version `0.3.0` adds:
 
 - profile-only `cpu_limit=<percent>%` to resolve a best-effort FFmpeg `-threads` value from detected CPU cores
+- validation for `cpu_limit` percentages from `1%` through `100%`
 - verbose logging of detected CPU cores and resolved thread count
 - example managed CPU job and profile files
+
+Note: `cpu_limit` moved from profile-level to job-level in `0.4.0` because it controls one FFmpeg process.
 
 ## 0.2.0
 

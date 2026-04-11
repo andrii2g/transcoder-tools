@@ -13,8 +13,6 @@ resolve_profile_runtime() {
   local quality
   local crf_value
   local video_filter
-  local cpu_limit
-  local cpu_threads
 
   preset="$(config_get "$profile_name" preset)"
   resolve_dimensions \
@@ -50,21 +48,25 @@ resolve_profile_runtime() {
   profile_ref[resolved_crf]="$crf_value"
   profile_ref[resolved_video_filter]="$video_filter"
 
-  cpu_limit="$(config_get "$profile_name" cpu_limit)"
-  if [[ -n "$cpu_limit" ]]; then
-    cpu_threads="$(resolve_cpu_threads "$cpu_limit")"
-    profile_ref[resolved_cpu_threads]="$cpu_threads"
-  else
-    profile_ref[resolved_cpu_threads]=""
-  fi
-
   log_verbose "Profile $(config_get "$profile_name" name) resolved preset=${preset} width=${width} height=${height}"
   log_verbose "Profile $(config_get "$profile_name" name) bitrate map video=${video_bitrate} audio=${audio_bitrate}"
   log_verbose "Profile $(config_get "$profile_name" name) filter=${video_filter}"
-  if [[ -n "${profile_ref[resolved_cpu_threads]}" ]]; then
-    log_verbose "Profile $(config_get "$profile_name" name) cpu_limit=${cpu_limit} threads=${profile_ref[resolved_cpu_threads]} cores=$(detect_cpu_cores)"
-  fi
   log_verbose "Profile $(config_get "$profile_name" name) codec map video=${video_codec} audio=${audio_codec} crf=${crf_value}"
+}
+
+append_job_cpu_threads() {
+  local job_name="$1"
+  local cmd_name="$2"
+  local -n cmd_ref="$cmd_name"
+  local cpu_limit
+  local cpu_threads
+
+  cpu_limit="$(config_get "$job_name" cpu_limit)"
+  if [[ -n "$cpu_limit" ]]; then
+    cpu_threads="$(resolve_cpu_threads "$cpu_limit")"
+    cmd_ref+=("-threads" "$cpu_threads")
+    log_verbose "Job cpu_limit=${cpu_limit} threads=${cpu_threads} cores=$(detect_cpu_cores)"
+  fi
 }
 
 build_ffmpeg_command() {
@@ -94,9 +96,7 @@ build_ffmpeg_command() {
     cmd_ref+=("-n")
   fi
 
-  if [[ -n "${profile_ref[resolved_cpu_threads]}" ]]; then
-    cmd_ref+=("-threads" "${profile_ref[resolved_cpu_threads]}")
-  fi
+  append_job_cpu_threads "$job_name" "$cmd_name"
 
   cmd_ref+=(
     "-i" "$input_path"
@@ -130,6 +130,89 @@ build_ffmpeg_command() {
   )
 }
 
+build_multi_output_ffmpeg_command() {
+  local job_name="$1"
+  local profiles_name="$2"
+  local cmd_name="$3"
+  local -n profiles_ref="$profiles_name"
+  local -n cmd_ref="$cmd_name"
+  local ffmpeg_bin
+  local input_path
+  local overwrite_flag
+  local count
+  local filter_complex=""
+  local split_outputs=""
+  local idx
+  local profile_name
+  local output_path
+  local audio_sample_rate
+  local extra_output_args
+  local -a extra_args=()
+
+  ffmpeg_bin="$(config_get "$job_name" ffmpeg ffmpeg)"
+  input_path="$(config_get "$job_name" input)"
+  overwrite_flag="$(normalize_bool "$(config_get "$job_name" overwrite false)")"
+  count="${#profiles_ref[@]}"
+
+  cmd_ref=("$ffmpeg_bin")
+  if [[ "$overwrite_flag" == "true" ]]; then
+    cmd_ref+=("-y")
+  else
+    cmd_ref+=("-n")
+  fi
+
+  append_job_cpu_threads "$job_name" "$cmd_name"
+  cmd_ref+=("-i" "$input_path")
+
+  for ((idx = 0; idx < count; idx++)); do
+    split_outputs+="[v${idx}]"
+  done
+
+  filter_complex="[0:v]split=${count}${split_outputs}"
+  for ((idx = 0; idx < count; idx++)); do
+    profile_name="${profiles_ref[$idx]}"
+    local -n profile_ref="$profile_name"
+    filter_complex+=";[v${idx}]${profile_ref[resolved_video_filter]}[v${idx}out]"
+    unset -n profile_ref
+  done
+
+  cmd_ref+=("-filter_complex" "$filter_complex")
+
+  for ((idx = 0; idx < count; idx++)); do
+    profile_name="${profiles_ref[$idx]}"
+    local -n profile_ref="$profile_name"
+    output_path="$(config_get "$profile_name" output)"
+
+    cmd_ref+=(
+      "-map" "[v${idx}out]"
+      "-map" "0:a?"
+      "-c:v:${idx}" "${profile_ref[resolved_video_codec]}"
+      "-b:v:${idx}" "${profile_ref[resolved_video_bitrate]}"
+      "-c:a:${idx}" "${profile_ref[resolved_audio_codec]}"
+      "-b:a:${idx}" "${profile_ref[resolved_audio_bitrate]}"
+    )
+
+    audio_sample_rate="$(config_get "$profile_name" audio_sample_rate)"
+    if [[ -n "$audio_sample_rate" && "$audio_sample_rate" != "source" ]]; then
+      cmd_ref+=("-ar:${idx}" "$audio_sample_rate")
+    fi
+
+    case "${profile_ref[resolved_video_codec]}" in
+      libx264|libx265)
+        cmd_ref+=("-crf:${idx}" "${profile_ref[resolved_crf]}")
+        ;;
+    esac
+
+    extra_output_args="$(config_get "$profile_name" extra_output_args)"
+    if [[ -n "$extra_output_args" ]]; then
+      split_words "$extra_output_args" extra_args
+      cmd_ref+=("${extra_args[@]}")
+    fi
+
+    cmd_ref+=("-movflags" "+faststart" "$output_path")
+    unset -n profile_ref
+  done
+}
 run_ffmpeg_command() {
   local cmd_name="$1"
   local -n cmd_ref="$cmd_name"

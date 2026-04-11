@@ -15,6 +15,7 @@ A job file defines the shared input and execution settings. It can reference one
 ```config
 input=./input/source.mp4
 ffmpeg=ffmpeg
+mode=sequential
 overwrite=true
 outputs=./profiles/example-1080p.conf,./profiles/example-custom-preset.conf
 ```
@@ -41,7 +42,11 @@ audio_sample_rate=48000
 quality=standard
 ```
 
-The first implementation resolves each profile independently and executes one `ffmpeg` command per output, sequentially.
+## Modes
+
+`mode=sequential` is the default and runs one FFmpeg command per output profile.
+
+`mode=multi-output` builds one FFmpeg command for all output profiles. It is useful when one source video should produce several MP4 renditions in one process. The command uses optional audio mapping (`-map 0:a?`) so source videos without audio do not fail only because audio is missing.
 
 ## Presets
 
@@ -69,7 +74,7 @@ Resolved mappings in v1:
 
 You can copy any preset file or create a new one under `presets/`, then reference it from a profile with `preset=<name>`.
 
-Profile values override preset values where applicable. Bundled presets default to `audio_sample_rate=48000`, and profiles can use `audio_sample_rate=source` to preserve the source sample rate. Profiles can also set `cpu_limit=50%` to make processing less aggressive on the current machine. Advanced ffmpeg details such as custom video filters can live in preset files so profiles remain output-focused.
+Profile values override preset values where applicable. Bundled presets default to `audio_sample_rate=48000`, and profiles can use `audio_sample_rate=source` to preserve the source sample rate. Jobs can set `cpu_limit=50%` to make processing less aggressive on the current machine. Advanced ffmpeg details such as custom video filters can live in preset files so profiles remain output-focused.
 
 ## Quality model
 

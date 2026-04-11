@@ -54,27 +54,21 @@ run_validate() {
   emit_line "Validation successful for $job_path"
 }
 
-run_transcode() {
-  local job_path="$1"
-  local dry_run="$2"
-  local -A job_cfg=()
-  local -a output_paths=()
+run_sequential_transcode() {
+  local job_name="$1"
+  local outputs_name="$2"
+  local dry_run="$3"
+  local -n output_paths_ref="$outputs_name"
   local -A profile_cfg=()
   local -a ffmpeg_cmd=()
   local profile_path
   local output_path
 
-  load_and_validate_job_bundle "$job_path" job_cfg output_paths
-
-  if [[ "$dry_run" != "1" ]]; then
-    require_command "$(config_get job_cfg ffmpeg ffmpeg)"
-  fi
-
-  for profile_path in "${output_paths[@]}"; do
+  for profile_path in "${output_paths_ref[@]}"; do
     profile_cfg=()
     validate_profile_config "$profile_path" profile_cfg
     resolve_profile_runtime profile_cfg
-    build_ffmpeg_command job_cfg profile_cfg ffmpeg_cmd
+    build_ffmpeg_command "$job_name" profile_cfg ffmpeg_cmd
     output_path="$(config_get profile_cfg output)"
 
     emit_line "$(join_command_for_display "${ffmpeg_cmd[@]}")"
@@ -88,6 +82,65 @@ run_transcode() {
   done
 }
 
+run_multi_output_transcode() {
+  local job_name="$1"
+  local outputs_name="$2"
+  local dry_run="$3"
+  local -n output_paths_ref="$outputs_name"
+  local -a profile_names=()
+  local -a ffmpeg_cmd=()
+  local profile_path
+  local output_path
+  local idx
+
+  for idx in "${!output_paths_ref[@]}"; do
+    profile_names[$idx]="profile_cfg_${idx}"
+    declare -gA "${profile_names[$idx]}=()"
+    validate_profile_config "${output_paths_ref[$idx]}" "${profile_names[$idx]}"
+    resolve_profile_runtime "${profile_names[$idx]}"
+  done
+
+  build_multi_output_ffmpeg_command "$job_name" profile_names ffmpeg_cmd
+  emit_line "$(join_command_for_display "${ffmpeg_cmd[@]}")"
+
+  if [[ "$dry_run" == "1" ]]; then
+    return 0
+  fi
+
+  for profile_path in "${profile_names[@]}"; do
+    output_path="$(config_get "$profile_path" output)"
+    ensure_parent_dir "$output_path"
+  done
+
+  run_ffmpeg_command ffmpeg_cmd
+}
+
+run_transcode() {
+  local job_path="$1"
+  local dry_run="$2"
+  local -A job_cfg=()
+  local -a output_paths=()
+  local mode
+
+  load_and_validate_job_bundle "$job_path" job_cfg output_paths
+
+  if [[ "$dry_run" != "1" ]]; then
+    require_command "$(config_get job_cfg ffmpeg ffmpeg)"
+  fi
+
+  mode="$(config_get job_cfg mode sequential)"
+  case "$mode" in
+    sequential)
+      run_sequential_transcode job_cfg output_paths "$dry_run"
+      ;;
+    multi-output)
+      run_multi_output_transcode job_cfg output_paths "$dry_run"
+      ;;
+    *)
+      die "Unsupported mode: $mode"
+      ;;
+  esac
+}
 vtx_main() {
   local command=""
   local job_path=""
