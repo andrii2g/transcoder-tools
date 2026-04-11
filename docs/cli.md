@@ -21,7 +21,7 @@ Print all supported root presets with resolved dimensions, default bitrates, and
 Validate one job file and every profile it references.
 
 ```bash
-./bin/vtx.sh validate --job ./jobs/example-multi-output.conf
+./bin/vtx.sh validate --job ./jobs/example-multi-video.conf
 ```
 
 Validation checks include:
@@ -43,7 +43,7 @@ The command exits nonzero on failure.
 Run a transcode job.
 
 ```bash
-./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf
+./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf
 ```
 
 By default, jobs use `mode=sequential`, which runs one FFmpeg command per output profile. Jobs can also use `mode=multi-output`, which builds one MP4-oriented FFmpeg command for all output profiles, or `mode=hls`, which creates HLS variant playlists and segments.
@@ -53,7 +53,7 @@ By default, jobs use `mode=sequential`, which runs one FFmpeg command per output
 Resolve and validate the job, then print generated `ffmpeg` commands without executing them.
 
 ```bash
-./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --dry-run
+./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf --dry-run
 ```
 
 ### `--verbose`
@@ -61,7 +61,7 @@ Resolve and validate the job, then print generated `ffmpeg` commands without exe
 Print resolved config values, preset dimensions, codec mappings, bitrate mappings, CPU thread resolution, and execution details.
 
 ```bash
-./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose
+./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf --verbose
 ```
 
 ### `--log`
@@ -69,7 +69,7 @@ Print resolved config values, preset dimensions, codec mappings, bitrate mapping
 Write transcode output to a log file. During real transcodes, `ffmpeg` output is appended to the same log file.
 
 ```bash
-./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose --log ./logs/transcode.log
+./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf --verbose --log ./logs/transcode.log
 ```
 
 The log directory is created automatically if needed. Existing log files are overwritten at the start of the transcode run.
@@ -77,7 +77,7 @@ The log directory is created automatically if needed. Existing log files are ove
 Dry-run logging is useful for reviewing generated commands:
 
 ```bash
-./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --dry-run --verbose --log ./logs/dry-run.log
+./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf --dry-run --verbose --log ./logs/dry-run.log
 ```
 
 ### `--version`
@@ -132,5 +132,5 @@ Generate an HLS command and planned master playlist:
 Run multiple outputs sequentially and save detailed logs:
 
 ```bash
-./bin/vtx.sh transcode --job ./jobs/example-multi-output.conf --verbose --log ./logs/multi-output.log
+./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf --verbose --log ./logs/multi-video.log
 ```
