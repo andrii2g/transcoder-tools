@@ -90,4 +90,5 @@ transcoder-tools/
 - [Config format](docs/config-format.md): required fields, optional fields, and override rules
 - [Preset details](docs/presets.md): preset dimensions, width/height overrides, and codec mappings
 - [Roadmap](docs/roadmap.md): planned HLS, live OBS, and adaptive streaming work
+- [References](docs/references.md): external FFmpeg, HLS, CORS, and player resources
 - [Changelog](CHANGELOG.md): version-specific release notes
