@@ -2,6 +2,16 @@
 
 All notable changes to `transcoder-tools` are documented here.
 
+## 0.3.0
+
+Added profile-level CPU management for transcode runs.
+
+Version `0.3.0` adds:
+
+- profile-only `cpu_limit=<percent>%` to resolve a best-effort FFmpeg `-threads` value from detected CPU cores
+- verbose logging of detected CPU cores and resolved thread count
+- example managed CPU job and profile files
+
 ## 0.2.0
 
 Added transcode logging and advanced preset-only ffmpeg escape hatches.
@@ -20,7 +30,6 @@ Version `0.2.0` adds:
 - example advanced-filter job and profile files
 - example presets under `presets/examples/` to keep bundled presets separate
 - `audio_sample_rate=source` to preserve source audio sample rate by omitting `-ar`
-- profile-only `cpu_limit=<percent>%` to resolve a best-effort FFmpeg `-threads` value from detected CPU cores
 
 ## 0.1.0
 
