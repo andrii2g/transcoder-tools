@@ -273,14 +273,19 @@
       }
 
       if (window.Hls && window.Hls.isSupported()) {
-        hls = new window.Hls();
+        hls = new window.Hls({
+          lowLatencyMode: true,
+          liveSyncDurationCount: 1,
+          liveMaxLatencyDurationCount: 2,
+          maxLiveSyncPlaybackRate: 1.5
+        });
         hls.on(window.Hls.Events.ERROR, (_event, data) => {
           const detail = data && data.details ? data.details : 'unknown error';
           setStatus(`hls.js error: ${detail}`, true);
         });
         hls.loadSource(src);
         hls.attachMedia(video);
-        setStatus(`Loaded with hls.js: ${src}`);
+        setStatus(`Loaded with hls.js low-latency settings: ${src}`);
         return;
       }
 

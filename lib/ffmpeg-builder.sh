@@ -69,6 +69,58 @@ append_job_cpu_threads() {
   fi
 }
 
+append_job_input_args() {
+  local job_name="$1"
+  local cmd_name="$2"
+  local -n cmd_ref="$cmd_name"
+  local input_args
+  local -a input_args_ref=()
+
+  input_args="$(config_get "$job_name" input_args)"
+  if [[ -n "$input_args" ]]; then
+    split_words "$input_args" input_args_ref
+    cmd_ref+=("${input_args_ref[@]}")
+    log_verbose "Job input_args=${input_args}"
+  fi
+}
+
+append_profile_video_tuning_args() {
+  local profile_name="$1"
+  local runtime_name="$2"
+  local cmd_name="$3"
+  local -n cmd_ref="$cmd_name"
+  local -n runtime_ref="$runtime_name"
+  local gop
+  local keyint_min
+  local sc_threshold
+  local video_preset
+  local video_tune
+
+  gop="$(config_get "$profile_name" gop)"
+  if [[ -n "$gop" ]]; then
+    cmd_ref+=("-g" "$gop")
+  fi
+
+  keyint_min="$(config_get "$profile_name" keyint_min)"
+  if [[ -n "$keyint_min" ]]; then
+    cmd_ref+=("-keyint_min" "$keyint_min")
+  fi
+
+  sc_threshold="$(config_get "$profile_name" sc_threshold)"
+  if [[ -n "$sc_threshold" ]]; then
+    cmd_ref+=("-sc_threshold" "$sc_threshold")
+  fi
+
+  video_preset="$(config_get "$profile_name" video_preset)"
+  if [[ -n "$video_preset" ]]; then
+    cmd_ref+=("-preset" "$video_preset")
+  fi
+
+  video_tune="$(config_get "$profile_name" video_tune)"
+  if [[ -n "$video_tune" && "${runtime_ref[resolved_video_codec]}" == "libx264" ]]; then
+    cmd_ref+=("-tune" "$video_tune")
+  fi
+}
 build_ffmpeg_command() {
   local job_name="$1"
   local profile_name="$2"
@@ -117,6 +169,8 @@ build_ffmpeg_command() {
       cmd_ref+=("-crf" "${profile_ref[resolved_crf]}")
       ;;
   esac
+
+  append_profile_video_tuning_args "$profile_name" "$profile_name" "$cmd_name"
 
   extra_output_args="$(config_get "$profile_name" extra_output_args)"
   if [[ -n "$extra_output_args" ]]; then
@@ -203,7 +257,9 @@ build_multi_output_ffmpeg_command() {
         ;;
     esac
 
-    extra_output_args="$(config_get "$profile_name" extra_output_args)"
+    append_profile_video_tuning_args "$profile_name" "$profile_name" "$cmd_name"
+
+  extra_output_args="$(config_get "$profile_name" extra_output_args)"
     if [[ -n "$extra_output_args" ]]; then
       split_words "$extra_output_args" extra_args
       cmd_ref+=("${extra_args[@]}")
@@ -213,6 +269,7 @@ build_multi_output_ffmpeg_command() {
     unset -n profile_ref
   done
 }
+
 hls_segment_pattern_for_output() {
   local output_path="$1"
   local parent
@@ -278,6 +335,42 @@ relative_path_from_dir() {
   fi
 
   printf '%s' "$target"
+}
+
+resolve_live_hls_flags() {
+  local job_name="$1"
+  local explicit_flags
+  local delete_segments
+  local append_list
+  local -a flags=()
+  local result=""
+  local item
+
+  explicit_flags="$(config_get "$job_name" hls_flags)"
+  if [[ -n "$explicit_flags" ]]; then
+    printf '%s' "$explicit_flags"
+    return 0
+  fi
+
+  flags=("independent_segments")
+  delete_segments="$(normalize_bool "$(config_get "$job_name" hls_delete_segments true)")"
+  append_list="$(normalize_bool "$(config_get "$job_name" hls_append_list true)")"
+
+  if [[ "$append_list" == "true" ]]; then
+    flags+=("append_list")
+  fi
+  if [[ "$delete_segments" == "true" ]]; then
+    flags+=("delete_segments")
+  fi
+
+  for item in "${flags[@]}"; do
+    if [[ -n "$result" ]]; then
+      result+="+"
+    fi
+    result+="$item"
+  done
+
+  printf '%s' "$result"
 }
 
 write_hls_master_playlist() {
@@ -396,7 +489,9 @@ build_hls_ffmpeg_command() {
         ;;
     esac
 
-    extra_output_args="$(config_get "$profile_name" extra_output_args)"
+    append_profile_video_tuning_args "$profile_name" "$profile_name" "$cmd_name"
+
+  extra_output_args="$(config_get "$profile_name" extra_output_args)"
     if [[ -n "$extra_output_args" ]]; then
       split_words "$extra_output_args" extra_args
       cmd_ref+=("${extra_args[@]}")
@@ -419,6 +514,115 @@ build_hls_ffmpeg_command() {
     unset -n profile_ref
   done
 }
+
+build_live_hls_ffmpeg_command() {
+  local job_name="$1"
+  local profiles_name="$2"
+  local cmd_name="$3"
+  local -n profiles_ref="$profiles_name"
+  local -n cmd_ref="$cmd_name"
+  local ffmpeg_bin
+  local input_path
+  local overwrite_flag
+  local count
+  local filter_complex=""
+  local split_outputs=""
+  local idx
+  local profile_name
+  local output_path
+  local audio_sample_rate
+  local extra_output_args
+  local segment_time
+  local list_size
+  local hls_flags
+  local segment_pattern
+  local -a extra_args=()
+
+  ffmpeg_bin="$(config_get "$job_name" ffmpeg ffmpeg)"
+  input_path="$(config_get "$job_name" input)"
+  overwrite_flag="$(normalize_bool "$(config_get "$job_name" overwrite false)")"
+  count="${#profiles_ref[@]}"
+  segment_time="$(config_get "$job_name" hls_segment_time 2)"
+  list_size="$(config_get "$job_name" hls_list_size 8)"
+  hls_flags="$(resolve_live_hls_flags "$job_name")"
+
+  cmd_ref=("$ffmpeg_bin")
+  if [[ "$overwrite_flag" == "true" ]]; then
+    cmd_ref+=("-y")
+  else
+    cmd_ref+=("-n")
+  fi
+
+  append_job_cpu_threads "$job_name" "$cmd_name"
+  append_job_input_args "$job_name" "$cmd_name"
+  cmd_ref+=("-i" "$input_path")
+
+  for ((idx = 0; idx < count; idx++)); do
+    split_outputs+="[v${idx}]"
+  done
+
+  filter_complex="[0:v]split=${count}${split_outputs}"
+  for ((idx = 0; idx < count; idx++)); do
+    profile_name="${profiles_ref[$idx]}"
+    local -n profile_ref="$profile_name"
+    filter_complex+=";[v${idx}]${profile_ref[resolved_video_filter]}[v${idx}out]"
+    unset -n profile_ref
+  done
+
+  cmd_ref+=("-filter_complex" "$filter_complex")
+
+  for ((idx = 0; idx < count; idx++)); do
+    profile_name="${profiles_ref[$idx]}"
+    local -n profile_ref="$profile_name"
+    output_path="$(config_get "$profile_name" output)"
+    segment_pattern="$(hls_segment_pattern_for_output "$output_path")"
+
+    cmd_ref+=(
+      "-map" "[v${idx}out]"
+      "-map" "0:a?"
+      "-c:v" "${profile_ref[resolved_video_codec]}"
+      "-b:v" "${profile_ref[resolved_video_bitrate]}"
+      "-c:a" "${profile_ref[resolved_audio_codec]}"
+      "-b:a" "${profile_ref[resolved_audio_bitrate]}"
+    )
+
+    audio_sample_rate="$(config_get "$profile_name" audio_sample_rate)"
+    if [[ -n "$audio_sample_rate" && "$audio_sample_rate" != "source" ]]; then
+      cmd_ref+=("-ar" "$audio_sample_rate")
+    fi
+
+    case "${profile_ref[resolved_video_codec]}" in
+      libx264|libx265)
+        cmd_ref+=("-crf" "${profile_ref[resolved_crf]}")
+        ;;
+    esac
+
+    append_profile_video_tuning_args "$profile_name" "$profile_name" "$cmd_name"
+
+  extra_output_args="$(config_get "$profile_name" extra_output_args)"
+    if [[ -n "$extra_output_args" ]]; then
+      split_words "$extra_output_args" extra_args
+      cmd_ref+=("${extra_args[@]}")
+    fi
+
+    cmd_ref+=(
+      "-f" "hls"
+      "-hls_time" "$segment_time"
+      "-hls_list_size" "$list_size"
+    )
+
+    if [[ -n "$hls_flags" ]]; then
+      cmd_ref+=("-hls_flags" "$hls_flags")
+    fi
+
+    cmd_ref+=(
+      "-hls_segment_filename" "$segment_pattern"
+      "$output_path"
+    )
+    unset -n profile_ref
+  done
+}
+
 run_ffmpeg_command() {
   local cmd_name="$1"
   local -n cmd_ref="$cmd_name"

@@ -50,7 +50,7 @@ run_validate() {
   for profile_path in "${output_paths[@]}"; do
     profile_cfg=()
     validate_profile_config "$profile_path" profile_cfg
-    if [[ "$mode" == "hls" ]]; then
+    if [[ "$mode" == "hls" || "$mode" == "live-hls" ]]; then
       validate_hls_profile_output "$profile_path" profile_cfg
     fi
     resolve_profile_runtime profile_cfg
@@ -72,9 +72,6 @@ run_sequential_transcode() {
   for profile_path in "${output_paths_ref[@]}"; do
     profile_cfg=()
     validate_profile_config "$profile_path" profile_cfg
-    if [[ "$mode" == "hls" ]]; then
-      validate_hls_profile_output "$profile_path" profile_cfg
-    fi
     resolve_profile_runtime profile_cfg
     build_ffmpeg_command "$job_name" profile_cfg ffmpeg_cmd
     output_path="$(config_get profile_cfg output)"
@@ -167,6 +164,47 @@ run_hls_transcode() {
   write_hls_master_playlist "$master_playlist" profile_names
   run_ffmpeg_command ffmpeg_cmd
 }
+
+run_live_hls_transcode() {
+  local job_name="$1"
+  local outputs_name="$2"
+  local dry_run="$3"
+  local -n output_paths_ref="$outputs_name"
+  local -a profile_names=()
+  local -a ffmpeg_cmd=()
+  local profile_path
+  local output_path
+  local master_playlist
+  local idx
+
+  for idx in "${!output_paths_ref[@]}"; do
+    profile_names[$idx]="profile_cfg_${idx}"
+    declare -gA "${profile_names[$idx]}=()"
+    validate_profile_config "${output_paths_ref[$idx]}" "${profile_names[$idx]}"
+    validate_hls_profile_output "${output_paths_ref[$idx]}" "${profile_names[$idx]}"
+    resolve_profile_runtime "${profile_names[$idx]}"
+  done
+
+  build_live_hls_ffmpeg_command "$job_name" profile_names ffmpeg_cmd
+  emit_line "$(join_command_for_display "${ffmpeg_cmd[@]}")"
+
+  master_playlist="$(config_get "$job_name" hls_master_playlist)"
+  emit_line "# Live HLS master playlist will be written to $master_playlist"
+
+  if [[ "$dry_run" == "1" ]]; then
+    return 0
+  fi
+
+  for profile_path in "${profile_names[@]}"; do
+    output_path="$(config_get "$profile_path" output)"
+    ensure_parent_dir "$output_path"
+  done
+
+  ensure_parent_dir "$master_playlist"
+  write_hls_master_playlist "$master_playlist" profile_names
+  run_ffmpeg_command ffmpeg_cmd
+}
+
 run_transcode() {
   local job_path="$1"
   local dry_run="$2"
@@ -191,11 +229,15 @@ run_transcode() {
     hls)
       run_hls_transcode job_cfg output_paths "$dry_run"
       ;;
+    live-hls)
+      run_live_hls_transcode job_cfg output_paths "$dry_run"
+      ;;
     *)
       die "Unsupported mode: $mode"
       ;;
   esac
 }
+
 vtx_main() {
   local command=""
   local job_path=""

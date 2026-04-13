@@ -1,8 +1,8 @@
-# Transcoder Tools
+﻿# Transcoder Tools
 
 `transcoder-tools` is a Bash toolkit for running common `ffmpeg` transcoding workflows through small, readable config files instead of long command lines.
 
-The main CLI is `vtx`, a config-driven video transcoder that turns one input video into one or more outputs using friendly concepts such as `720p`, `h264`, `aac`, `video_bitrate`, `audio_bitrate`, and `quality`.
+The main CLI is `vtx`, a config-driven video transcoder that turns one input video or live RTMP stream into one or more outputs using friendly concepts such as `720p`, `h264`, `aac`, `video_bitrate`, `audio_bitrate`, and `quality`.
 
 ## Why we need it?
 
@@ -10,7 +10,7 @@ The main CLI is `vtx`, a config-driven video transcoder that turns one input vid
 
 - user-friendly abstraction over raw `ffmpeg` flags
 - config-driven jobs that are easy to save and rerun
-- simple first version that supports MP4 and HLS workflows while staying extensible for live and OBS workflows
+- simple first version that supports MP4, file-to-HLS, and live RTMP-to-HLS workflows while staying extensible for later OBS operations work
 
 ## Quick start
 
@@ -18,7 +18,9 @@ Requirements: Bash 4+ and `ffmpeg`.
 
 See [Installation](docs/installation.md) for `ffmpeg` setup, executable permissions, and optional `PATH` configuration.
 
-Not sure which example to start with? See the [Workflow guide](docs/workflows.md) for a Mermaid decision diagram covering basic, multi-video, multi-output, and HLS jobs.
+If you want the fastest path to a working live stream, start with [Live streaming quick start](docs/live-quick-start.md). It covers starting a local MediaMTX container, OBS setup, starting `vtx`, and opening the browser HLS test player.
+
+Not sure which example to start with? See the [Workflow guide](docs/workflows.md) for a Mermaid decision diagram covering basic, multi-video, multi-output, file-to-HLS, and live RTMP-to-HLS jobs.
 
 Basic usage:
 
@@ -29,6 +31,7 @@ Basic usage:
 ./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf --dry-run
 ./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf --verbose --log ./logs/transcode.log
 ./bin/vtx.sh transcode --job ./jobs/example-hls.conf --dry-run --verbose
+./bin/vtx.sh transcode --job ./jobs/example-live-hls.conf --dry-run --verbose
 ```
 
 Make the script executable on Linux if needed:
@@ -69,12 +72,12 @@ transcoder-tools/
   docs/
 ```
 
-- [`bin/vtx.sh`](transcoder-tools/bin/vtx.sh): main CLI entrypoint
-- [`lib/`](transcoder-tools/lib): parser, presets, validation, and ffmpeg command builder
-- [`jobs/`](transcoder-tools/jobs): sample job configs
-- [`profiles/`](transcoder-tools/profiles): sample output profile configs
-- [`presets/`](transcoder-tools/presets): preset reference files
-- [`docs/`](transcoder-tools/docs): user-facing docs
+- `bin/vtx.sh`: main CLI entrypoint
+- `lib/`: parser, presets, validation, and ffmpeg command builder
+- `jobs/`: sample job configs
+- `profiles/`: sample output profile configs
+- `presets/`: preset reference files
+- `docs/`: user-facing docs
 
 ## Example commands
 
@@ -84,16 +87,18 @@ transcoder-tools/
 ./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf
 ./bin/vtx.sh transcode --job ./jobs/example-custom.conf --dry-run --verbose
 ./bin/vtx.sh transcode --job ./jobs/example-hls.conf --dry-run --verbose
+./bin/vtx.sh transcode --job ./jobs/example-live-hls.conf --dry-run --verbose
 ```
 
 ## Documentation
 
 - [Installation](docs/installation.md): ffmpeg setup and vtx shell configuration
+- [Live streaming quick start](docs/live-quick-start.md): fastest path for MediaMTX ingest, OBS publishing, live HLS transcoding, and browser playback testing
 - [CLI reference](docs/cli.md): commands, flags, and examples
-- [Workflow guide](docs/workflows.md): decision diagram for choosing basic, multi-video, multi-output, or HLS jobs
+- [Workflow guide](docs/workflows.md): decision diagram for choosing basic, multi-video, multi-output, file-to-HLS, or live RTMP-to-HLS jobs
 - [Core concepts](docs/concepts.md): how jobs, profiles, presets, and quality values work
 - [Config format](docs/config-format.md): required fields, optional fields, and override rules
-- [HLS mode](docs/hls.md): HLS jobs, variant playlists, segments, master playlists, and the browser test player
+- [HLS mode](docs/hls.md): file-to-HLS and live RTMP-to-HLS jobs, playlists, segments, master playlists, and the browser test player
 - [Preset details](docs/presets.md): preset dimensions, width/height overrides, and codec mappings
 - [Roadmap](docs/roadmap.md): planned live OBS and adaptive streaming work
 - [References](docs/references.md): external FFmpeg, HLS, CORS, and player resources

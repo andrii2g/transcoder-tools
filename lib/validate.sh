@@ -8,12 +8,20 @@ validate_cpu_limit_value() {
   [[ "$cpu_percent" -ge 1 && "$cpu_percent" -le 100 ]] || die "cpu_limit must be between 1% and 100% in $context"
 }
 
+validate_positive_integer() {
+  local value="$1"
+  local field_name="$2"
+  local context="$3"
+  [[ "$value" =~ ^[0-9]+$ && "$value" -ge 1 ]] || die "${field_name} must be a positive number in $context"
+}
+
 validate_job_config() {
   local job_path="$1"
   local job_name="$2"
   local outputs_name="$3"
   local -n job_ref="$job_name"
   local input_path
+  local input_mode
   local overwrite_value
   local outputs_raw
   local mode_value
@@ -24,7 +32,20 @@ validate_job_config() {
 
   input_path="$(config_get "$job_name" input)"
   [[ -n "$input_path" ]] || die "Job field input is required"
-  [[ -f "$input_path" ]] || die "Input file not found: $input_path"
+
+  input_mode="$(config_get "$job_name" input_mode file)"
+  case "$input_mode" in
+    file)
+      [[ -f "$input_path" ]] || die "Input file not found: $input_path"
+      ;;
+    rtmp)
+      [[ "$input_path" == rtmp://* ]] || die "RTMP input must begin with rtmp:// in $job_path"
+      ;;
+    *)
+      die "Unsupported input_mode in $job_path: $input_mode"
+      ;;
+  esac
+  job_ref[input_mode]="$input_mode"
 
   outputs_raw="$(config_get "$job_name" outputs)"
   parse_outputs_field "$outputs_raw" "$outputs_name"
@@ -34,7 +55,7 @@ validate_job_config() {
 
   mode_value="$(config_get "$job_name" mode sequential)"
   case "$mode_value" in
-    sequential|multi-output|hls) job_ref[mode]="$mode_value" ;;
+    sequential|multi-output|hls|live-hls) job_ref[mode]="$mode_value" ;;
     *) die "Unsupported mode in $job_path: $mode_value" ;;
   esac
 
@@ -43,9 +64,14 @@ validate_job_config() {
     validate_cpu_limit_value "$cpu_limit" "$job_path"
   fi
 
-  if [[ "$mode_value" == "hls" ]]; then
-    validate_hls_job_fields "$job_name" "$job_path"
-  fi
+  case "$mode_value" in
+    hls)
+      validate_hls_job_fields "$job_name" "$job_path"
+      ;;
+    live-hls)
+      validate_live_hls_job_fields "$job_name" "$job_path"
+      ;;
+  esac
 
   local ffmpeg_bin
   ffmpeg_bin="$(config_get "$job_name" ffmpeg ffmpeg)"
@@ -60,7 +86,7 @@ validate_hls_job_fields() {
   local master_playlist
 
   segment_time="$(config_get "$job_name" hls_segment_time 6)"
-  [[ "$segment_time" =~ ^[0-9]+$ && "$segment_time" -ge 1 ]] || die "hls_segment_time must be a positive number in $job_path"
+  validate_positive_integer "$segment_time" "hls_segment_time" "$job_path"
 
   playlist_type="$(config_get "$job_name" hls_playlist_type vod)"
   case "$playlist_type" in
@@ -75,6 +101,38 @@ validate_hls_job_fields() {
   fi
 }
 
+validate_live_hls_job_fields() {
+  local job_name="$1"
+  local job_path="$2"
+  local segment_time
+  local list_size
+  local master_playlist
+  local delete_segments
+  local append_list
+
+  [[ "$(config_get "$job_name" input_mode file)" == "rtmp" ]] || die "mode=live-hls requires input_mode=rtmp in $job_path"
+
+  segment_time="$(config_get "$job_name" hls_segment_time 2)"
+  validate_positive_integer "$segment_time" "hls_segment_time" "$job_path"
+
+  list_size="$(config_get "$job_name" hls_list_size 8)"
+  validate_positive_integer "$list_size" "hls_list_size" "$job_path"
+
+  master_playlist="$(config_get "$job_name" hls_master_playlist)"
+  [[ -n "$master_playlist" ]] || die "hls_master_playlist is required when mode=live-hls in $job_path"
+  [[ "$master_playlist" == *.m3u8 ]] || die "hls_master_playlist must end with .m3u8 in $job_path"
+
+  delete_segments="$(config_get "$job_name" hls_delete_segments true)"
+  normalize_bool "$delete_segments" >/dev/null || die "Invalid hls_delete_segments value in $job_path: $delete_segments"
+
+  append_list="$(config_get "$job_name" hls_append_list true)"
+  normalize_bool "$append_list" >/dev/null || die "Invalid hls_append_list value in $job_path: $append_list"
+
+  if [[ -n "$(config_get "$job_name" hls_playlist_type)" ]]; then
+    die "hls_playlist_type is not supported for mode=live-hls in $job_path"
+  fi
+}
+
 validate_hls_profile_output() {
   local profile_path="$1"
   local profile_name="$2"
@@ -83,6 +141,7 @@ validate_hls_profile_output() {
   output_path="$(config_get "$profile_name" output)"
   [[ "$output_path" == *.m3u8 ]] || die "HLS profile output must be a .m3u8 playlist: $profile_path"
 }
+
 validate_profile_config() {
   local profile_path="$1"
   local profile_name="$2"

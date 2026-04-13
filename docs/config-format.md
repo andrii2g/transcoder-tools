@@ -11,7 +11,7 @@ Rules:
 
 ## Job files
 
-Job files define the shared execution context for one input video.
+Job files define the shared execution context for one input video or one live RTMP stream.
 
 Example:
 
@@ -25,16 +25,38 @@ outputs=./profiles/example-1080p.conf,./profiles/example-custom-preset.conf
 
 Job fields:
 
-- `input`: required source media path
+- `input`: required source media path or RTMP URL
+- `input_mode`: optional, defaults to `file`; supported values are `file` and `rtmp`
+- `input_args`: optional job-only ffmpeg input arguments, mainly for live ingest tuning
 - `ffmpeg`: optional ffmpeg executable, defaults to `ffmpeg`
 - `mode`: optional, defaults to `sequential`
 - `overwrite`: optional boolean, defaults to `false`
 - `cpu_limit`: optional job-level percentage such as `50%`
 - `outputs`: required comma-separated list of profile file paths
-- `hls_segment_time`: optional for `mode=hls`, defaults to `6`; target segment length in seconds
+- `hls_segment_time`: optional for `mode=hls`, defaults to `6`; optional for `mode=live-hls`, defaults to `2`; target segment length in seconds
 - `hls_playlist_type`: optional for `mode=hls`, defaults to `vod`; use `vod` for finished files and `event` for event-style playlists that grow over time
-- `hls_flags`: optional for `mode=hls`, defaults to `independent_segments`; FFmpeg HLS muxer flags for segment behavior
-- `hls_master_playlist`: required for `mode=hls`, path to the generated master playlist
+- `hls_flags`: optional for `mode=hls`, defaults to `independent_segments`; optional for `mode=live-hls`, otherwise computed from live flags when omitted
+- `hls_master_playlist`: required for `mode=hls` and `mode=live-hls`, path to the generated master playlist
+- `hls_list_size`: optional for `mode=live-hls`, defaults to `8`
+- `hls_delete_segments`: optional for `mode=live-hls`, defaults to `true`
+- `hls_append_list`: optional for `mode=live-hls`, defaults to `true`
+
+## Input modes
+
+`input_mode=file` is the default. It expects a normal local input file and validates that the file exists.
+
+```config
+input_mode=file
+input=./input/source.mp4
+```
+
+`input_mode=rtmp` is the first live ingest mode. It expects an RTMP URL and does not require a local file to exist.
+
+```config
+input_mode=rtmp
+input=rtmp://127.0.0.1:1935/live/browser
+input_args=-fflags nobuffer
+```
 
 ## Modes
 
@@ -52,7 +74,7 @@ mode=multi-output
 
 Use `multi-output` when you want one source video converted into several MP4 outputs in one FFmpeg process.
 
-`mode=hls` builds one FFmpeg command that creates one HLS variant playlist per profile. Profile `output=` values must end with `.m3u8`.
+`mode=hls` builds one FFmpeg command that creates one HLS variant playlist per profile from a file input. Profile `output=` values must end with `.m3u8`.
 
 ```config
 mode=hls
@@ -62,7 +84,23 @@ hls_flags=independent_segments
 hls_master_playlist=./out/hls/master.m3u8
 ```
 
-Use `hls` when you want multiple streaming renditions and segment playlists for an HLS player. See [HLS mode](hls.md) for details.
+Use `hls` when you want multiple streaming renditions and segment playlists from a normal file input. See [HLS mode](hls.md) for details.
+
+`mode=live-hls` is the RTMP-first live ingest path. It does not use `hls_playlist_type`; instead it uses `hls_list_size` and live-oriented HLS flags.
+
+```config
+input_mode=rtmp
+input=rtmp://127.0.0.1:1935/live/browser
+input_args=-fflags nobuffer
+mode=live-hls
+hls_segment_time=2
+hls_list_size=8
+hls_delete_segments=true
+hls_append_list=true
+hls_master_playlist=./out/live/master.m3u8
+```
+
+Use `live-hls` when you want to ingest an RTMP stream and generate HLS on the fly. The first live version is RTMP-first and does not include built-in restart supervision.
 
 ## CPU limit
 
@@ -80,7 +118,7 @@ This is a best-effort processing limit, not a hard operating-system CPU cap. Act
 
 ## Profile files
 
-Profile files define one output. In `sequential` and `multi-output` modes that output is normally an MP4 file. In `hls` mode it is a variant `.m3u8` playlist.
+Profile files define one output. In `sequential` and `multi-output` modes that output is normally an MP4 file. In `hls` and `live-hls` modes it is a variant `.m3u8` playlist.
 
 Minimal profile using preset defaults:
 
@@ -105,7 +143,7 @@ output=./out/source-720p.mp4
 Required profile fields:
 
 - `name`
-- `output`, usually an MP4 path; for `mode=hls`, this must be a `.m3u8` playlist path
+- `output`, usually an MP4 path; for `mode=hls` and `mode=live-hls`, this must be a `.m3u8` playlist path
 
 Use `preset=<name>` to load `./presets/<name>.conf`. You can also use a direct path such as `preset=./presets/examples/social-square.conf`.
 

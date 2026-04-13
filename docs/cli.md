@@ -27,7 +27,8 @@ Validate one job file and every profile it references.
 Validation checks include:
 
 - job file exists
-- input file exists
+- file inputs exist when `input_mode=file`
+- RTMP inputs are validated as RTMP URLs when `input_mode=rtmp`
 - referenced profile files exist
 - job `mode` is supported
 - required profile fields are present after preset resolution
@@ -46,7 +47,11 @@ Run a transcode job.
 ./bin/vtx.sh transcode --job ./jobs/example-multi-video.conf
 ```
 
-By default, jobs use `mode=sequential`, which runs one FFmpeg command per output profile. Jobs can also use `mode=multi-output`, which builds one MP4-oriented FFmpeg command for all output profiles, or `mode=hls`, which creates HLS variant playlists and segments.
+By default, jobs use `mode=sequential`, which runs one FFmpeg command per output profile. Jobs can also use:
+
+- `mode=multi-output` for one MP4-oriented FFmpeg command with multiple outputs
+- `mode=hls` for file-to-HLS packaging
+- `mode=live-hls` for RTMP ingest to live HLS output
 
 ### `--dry-run`
 
@@ -123,10 +128,16 @@ Generate one multi-output FFmpeg command:
 ./bin/vtx.sh transcode --job ./jobs/example-multi-output-mode.conf --dry-run --verbose
 ```
 
-Generate an HLS command and planned master playlist:
+Generate a file-to-HLS command and planned master playlist:
 
 ```bash
 ./bin/vtx.sh transcode --job ./jobs/example-hls.conf --dry-run --verbose
+```
+
+Generate a live RTMP-to-HLS command:
+
+```bash
+./bin/vtx.sh transcode --job ./jobs/example-live-hls.conf --dry-run --verbose
 ```
 
 Run multiple outputs sequentially and save detailed logs:

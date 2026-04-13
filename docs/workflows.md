@@ -6,7 +6,7 @@ Use this guide to choose the right `vtx` job style and the minimum config fields
 
 ```mermaid
 flowchart TD
-  A[Start with one source video file] --> B{What do you want to create}
+  A[Start with one source video file or RTMP stream] --> B{What do you want to create}
 
   B --> C[One output video]
   C --> C1[Use jobs/example-basic.conf]
@@ -25,12 +25,18 @@ flowchart TD
   E1 --> E2[Use one profile per MP4 output]
   E2 --> Z
 
-  B --> F[HLS streaming files]
+  B --> F[HLS from file input]
   F --> F1[Use jobs/example-hls.conf]
   F1 --> F2[Set mode=hls]
   F2 --> F3[Set m3u8 outputs and hls_master_playlist]
   F3 --> F4[Test with docs/hls-player.html]
   F4 --> Z
+
+  B --> L[Live RTMP to HLS]
+  L --> L1[Use jobs/example-live-hls.conf]
+  L1 --> L2[Set input_mode=rtmp and mode=live-hls]
+  L2 --> L3[Set hls_master_playlist and live outputs]
+  L3 --> Z
 
   Z --> Z1[validate --job JOB_FILE]
   Z1 --> Z2[transcode --job JOB_FILE --dry-run --verbose]
@@ -110,9 +116,9 @@ Profile fields to check:
 
 Use dry-run first and review the generated `filter_complex` command. Multi-output mode is more efficient for some workflows, but it is less simple than sequential mode.
 
-## HLS streaming output
+## HLS streaming output from file input
 
-Use this when you want HLS playlists and segments for a web player.
+Use this when you want HLS playlists and segments from a normal source file.
 
 Start from:
 
@@ -135,6 +141,36 @@ Profile fields to check:
 - `preset`: one preset per HLS rendition
 - `output`: variant playlist path ending with `.m3u8`, for example `./out/hls/720p/index.m3u8`
 
+## Live RTMP to HLS
+
+Use this when OBS or another publisher sends an RTMP stream and you want `vtx` to produce HLS on the fly.
+
+Start from:
+
+```bash
+./bin/vtx.sh transcode --job ./jobs/example-live-hls.conf --dry-run --verbose
+```
+
+Job fields to check:
+
+- `input_mode=rtmp`
+- `input`: RTMP URL such as `rtmp://127.0.0.1:1935/live/browser`
+- `input_args`: optional live ingest tuning such as `-fflags nobuffer`
+- `mode=live-hls`
+- `hls_master_playlist`: required master playlist path
+- `hls_segment_time`: default `2`
+- `hls_list_size`: default `8`
+- `hls_delete_segments`: default `true`
+- `hls_append_list`: default `true`
+- `outputs`: comma-separated live HLS profile files
+
+Profile fields to check:
+
+- `preset`: one preset per live rendition
+- `output`: variant playlist path ending with `.m3u8`
+
+The first live version is RTMP-first and does not include built-in restart supervision or watch mode.
+
 After generating HLS files, test playback with the browser test page:
 
 ```bash
@@ -152,9 +188,9 @@ http://localhost:8080/docs/hls-player.html?src=/out/hls/master.m3u8
 For every job, use the same safe command flow:
 
 ```bash
-./bin/vtx.sh validate --job ./jobs/example-hls.conf
-./bin/vtx.sh transcode --job ./jobs/example-hls.conf --dry-run --verbose
-./bin/vtx.sh transcode --job ./jobs/example-hls.conf --verbose --log ./logs/hls.log
+./bin/vtx.sh validate --job ./jobs/example-live-hls.conf
+./bin/vtx.sh transcode --job ./jobs/example-live-hls.conf --dry-run --verbose
+./bin/vtx.sh transcode --job ./jobs/example-live-hls.conf --verbose --log ./logs/live-hls.log
 ```
 
 `validate` catches config problems. `--dry-run --verbose` lets you inspect the generated FFmpeg command. `--log` saves details for later review.
