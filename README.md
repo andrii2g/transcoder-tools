@@ -1,4 +1,4 @@
-﻿# Transcoder Tools
+# Transcoder Tools
 
 `transcoder-tools` is a Bash toolkit for running common `ffmpeg` transcoding workflows through small, readable config files instead of long command lines.
 
@@ -100,6 +100,5 @@ transcoder-tools/
 - [Config format](docs/config-format.md): required fields, optional fields, and override rules
 - [HLS mode](docs/hls.md): file-to-HLS and live RTMP-to-HLS jobs, playlists, segments, master playlists, and the browser test player
 - [Preset details](docs/presets.md): preset dimensions, width/height overrides, and codec mappings
-- [Roadmap](docs/roadmap.md): planned live OBS and adaptive streaming work
 - [References](docs/references.md): external FFmpeg, HLS, CORS, and player resources
 - [Changelog](CHANGELOG.md): version-specific release notes

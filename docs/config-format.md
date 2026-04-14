@@ -160,6 +160,11 @@ Optional profile fields:
 - `audio_sample_rate`
 - `quality`, defaults to `standard`
 - `crf`, required only when `quality=custom`
+- `gop`
+- `keyint_min`
+- `sc_threshold`
+- `video_preset`
+- `video_tune`
 
 Advanced ffmpeg fields such as `video_filter` and `extra_output_args` are not allowed in profile files. Put them in custom preset files instead.
 
@@ -178,6 +183,28 @@ Set `source` to preserve the source sample rate by omitting `-ar` from the gener
 ```config
 audio_sample_rate=source
 ```
+
+## Live tuning fields
+
+These profile fields are useful mainly for `mode=live-hls`, where lower latency and more predictable segment boundaries matter.
+
+- `gop`: emits `-g <value>` and sets the keyframe interval
+- `keyint_min`: emits `-keyint_min <value>` and sets the minimum keyframe interval
+- `sc_threshold`: emits `-sc_threshold <value>` and controls scene-cut keyframe insertion
+- `video_preset`: emits `-preset <value>` and controls encoder speed versus compression efficiency
+- `video_tune`: emits `-tune <value>` for `libx264`
+
+Example:
+
+```config
+gop=30
+keyint_min=30
+sc_threshold=0
+video_preset=veryfast
+video_tune=zerolatency
+```
+
+This is a practical starting point for a 30 fps live HLS profile because it encourages one-second GOP boundaries and reduces encoder buffering. For 60 fps live output, start by testing `gop=60` and `keyint_min=60`.
 
 ## Preset files
 
